@@ -1,0 +1,2 @@
+# CMD/API directory
+Contains the application-specific code for the ***Greenlight*** API application. This includes the code for running the server, reading and writing HTTP requests, and managing authentication.

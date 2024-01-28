@@ -1,0 +1,4 @@
+# Internal directory
+Contains various ancillary packages used by the API. Contains code for interacting with the database, data validation, sending emails, etc. Any code which ***isn't*** application specific and can potentially be reused is located here. Code in the **cmd/api** directory will import the packages in the **internal** directory.
+
+The directory name **internal** carries a special meaning and behavior in Go. Any packages in this directory can only be imported by code *inside the parent of the* ***internal*** *directory*. Any packages in this **internal** directory can only be imported by code inside the **greenlight** project directory.
