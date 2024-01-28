@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -10,18 +9,26 @@ import (
 // version.
 // A METHOD on the APPLICATION struct.
 func (app *application) healthcheckHandler(w http.ResponseWriter, r *http.Request) {
-	// Create a fixed-format JSON response from a string.
-	js := `{
-			"status": "available",
-			"environment": %q,
-			"version": %q
-	}`
-	js = fmt.Sprintf(js, app.config.env, version)
-
-	// Set "Content-Type: application/json" header on
-	// response.
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON as the HTTP response body.
-	w.Write([]byte(js))
+	// Create an envelope map, using the evelope type
+	// in /cmd/api/helpers.go, that holds the information 
+	// to send in the response
+	env := envelope{
+		"status":				"available",
+		"system_info": map[string]string{
+			"environment":	app.config.env,
+			"version":			version,
+		},
+	}
+	
+	// Write JSON and headers using the writeJSON()
+	// function in /cmd/api/helpers.go
+	err := app.writeJSON(w, http.StatusOK, env, nil)
+	if err != nil {
+		app.logger.Println(err)
+		http.Error(
+			w,
+			"The server encounted a problem and could not process your request",
+			http.StatusInternalServerError,
+		)
+	}
 }

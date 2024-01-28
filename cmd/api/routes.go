@@ -27,18 +27,18 @@ func (app *application) routes() *httprouter.Router {
 		"/v1/healthcheck",
 		app.healthcheckHandler,
 	)
-	// POST create movie route
+	// POST create Event route
 	router.HandlerFunc(
 		http.MethodPost,
-		"/v1/movies",
-		app.createMovieHandler,
+		"/v1/events",
+		app.createEventHandler,
 	)
 
-	// GET get movie by ID route
+	// GET get Event by ID route
 	router.HandlerFunc(
 		http.MethodGet,
-		"/v1/movies/:id",
-		app.showMovieHandler,
+		"/v1/events/:id",
+		app.showEventHandler,
 	)
 
 	// Return the router instance
