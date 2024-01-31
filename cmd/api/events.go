@@ -15,7 +15,31 @@ import (
 // createEventHandler
 // A METHOD on the APPLICATION struct.
 func (app *application) createEventHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "create a new Event")
+	// Declare an anonymous strut to hold the info
+	// expected in the HTTP body. This struct is the
+	// *target decode destination*.
+	var input struct {
+		Title       string   `json:"title"`
+		Description string   `json:"description,omitempty"`
+		Tags        []string `json:"tags,omitempty"`
+		AllDay      bool     `json:"all_day"`
+		Start       string   `json:"start"`
+		End         string   `json:"end"`
+	}
+
+	// Use the readJSON() helper to decode request body
+	// into the input struct. If an error is returned,
+	// send the client the error message with a 400
+	// Ba Request status code.
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Place the contents of the input struct into an
+	// HTTP response.
+	fmt.Fprintf(w, "%+v\n", input)
 }
 
 // showEventHandler
@@ -24,23 +48,23 @@ func (app *application) showEventHandler(w http.ResponseWriter, r *http.Request)
 	// Use the readIDParam method in helpers.go
 	id, err := app.readIDParam(r)
 	if err != nil {
-		http.NotFound(w, r)
+		app.notFoundResponse(w, r)
 		return
 	}
 
 	// Create a new instance of the Event struct, containing
 	// the ID extracted from URL.
 	event := data.Event{
-		ID: id,
-		Title: "Work at Home Depot",
+		ID:          id,
+		Title:       "Work at Home Depot",
 		Description: "This is a normal work day at Home Depot",
-		Tags: []string{"work", "home depot"},
-		AllDay: false,
-		Start: app.stringToTime("2024-01-29 05:00:00"),
-		End: app.stringToTime("2024-01-29 14:00:00"),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Version: 1,
+		Tags:        []string{"work", "home depot"},
+		AllDay:      false,
+		Start:       app.stringToTime("2024-01-29 05:00:00"),
+		End:         app.stringToTime("2024-01-29 14:00:00"),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Version:     1,
 	}
 
 	// Encode the event struct to JSON and send it as
@@ -49,11 +73,6 @@ func (app *application) showEventHandler(w http.ResponseWriter, r *http.Request)
 	// of the event.
 	err = app.writeJSON(w, http.StatusOK, envelope{"event": event}, nil)
 	if err != nil {
-		app.logger.Println(err)
-		http.Error(
-			w,
-			"The server encountered a problem and could not process your request",
-			http.StatusInternalServerError,
-		)
+		app.serverErrorResponse(w, r, err)
 	}
 }

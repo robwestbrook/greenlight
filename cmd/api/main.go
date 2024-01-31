@@ -13,23 +13,23 @@ import (
 const version = "1.0.0"
 
 // Define a config struct to hold all configuration
-// settings fot the app. These settings will be 
+// settings fot the app. These settings will be
 // read from command-line flags when the app starts.
 // Configuration Settings:
-//	1.	port - network port for server
-//	2.	env - current operating environment
+//  1. port - network port for server
+//  2. env - current operating environment
 type config struct {
-	port		int
-	env			string
+	port int
+	env  string
 }
 
 // Define an app struct to hold dependencies.
 // Dependencies:
-//	1.	config - the config struct
-//	2.	logger - System logger
+//  1. config - the config struct
+//  2. logger - System logger
 type application struct {
-	config				config
-	logger				*log.Logger
+	config config
+	logger *log.Logger
 }
 
 // main function - The entry point for the app.
@@ -48,7 +48,7 @@ func main() {
 	// Initialize a new logger that writes messages to
 	// the standard out stream, prefixed with the
 	// current date and time.
-	logger := log.New(os.Stdout, "", log.Ldate | log.Ltime)
+	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
 	// Declare an instance of the application struct.
 	// Contains:
@@ -73,10 +73,10 @@ func main() {
 	//	4.	ReadTimeout
 	//	5.	WriteTimeout
 	srv := &http.Server{
-		Addr:					fmt.Sprintf(":%d", cfg.port),
-		Handler: 			app.routes(),
-		IdleTimeout: 	time.Minute,
-		ReadTimeout: 	10 * time.Second,
+		Addr:         fmt.Sprintf(":%d", cfg.port),
+		Handler:      app.routes(),
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 

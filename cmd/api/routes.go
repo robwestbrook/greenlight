@@ -15,6 +15,17 @@ func (app *application) routes() *httprouter.Router {
 	// Initialize a new httprouter router instance
 	router := httprouter.New()
 
+	// Convert the notFoundResponse() helper to an
+	// http.Handler using the http.HandleFunc adapter,
+	// and then set it as the custom error handler for
+	// 404 Not Found responses.
+	router.NotFound = http.HandlerFunc(app.notFoundResponse)
+
+	// Convert the methodNotAllowedResponse helper to an
+	// http.Handler and set it as the custom error handler
+	// for 405 Method Not Allowed responses.
+	router.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowedResponse)
+
 	// Register the functions for the api endpoints.
 	// Function attributes:
 	//	1.	Request Method
