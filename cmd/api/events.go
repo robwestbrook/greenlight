@@ -29,11 +29,10 @@ func (app *application) createEventHandler(w http.ResponseWriter, r *http.Reques
 
 	// Use the readJSON() helper to decode request body
 	// into the input struct. If an error is returned,
-	// send the client the error message with a 400
-	// Ba Request status code.
+	// use the badRequestResponse() helper.
 	err := app.readJSON(w, r, &input)
 	if err != nil {
-		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
