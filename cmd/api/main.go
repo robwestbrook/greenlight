@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Declare a string containing the app version.
@@ -18,9 +22,13 @@ const version = "1.0.0"
 // Configuration Settings:
 //  1. port - network port for server
 //  2. env - current operating environment
+//	3. db - database config settings
 type config struct {
 	port int
 	env  string
+	db	 struct {
+		dsn string
+	}
 }
 
 // Define an app struct to hold dependencies.
@@ -37,18 +45,35 @@ func main() {
 	// Declare an instance of config struct
 	var cfg config
 
-	// Read the port value and env command-line flags
-	// into config struct. Default to port 4000 and
-	// environment "development" when no flags are
-	// provided.
+	// Read command-line flags
+	// Flags:
+	//	1.	Server port (default: 4000)
+	//	2.	Environment setting (default: development)
+	//	3.	Database name (default: greenlight.db)
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", "greenlight.db", "SQLite database name")
 	flag.Parse()
 
 	// Initialize a new logger that writes messages to
 	// the standard out stream, prefixed with the
 	// current date and time.
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+
+	// Call openDB() function to create connection pool,
+	// passing in the config struct. If error returns,
+	// log it and exit app immediately.
+	db, err := openDB(cfg)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	// Defer db.Close() so connection pool closes before
+	// the main() function exits
+	defer db.Close()
+
+	// Log message db is open
+	logger.Printf("database connection pool established")
 
 	// Declare an instance of the application struct.
 	// Contains:
@@ -82,6 +107,31 @@ func main() {
 
 	// Start the HTTP server.
 	logger.Printf("starting %s server on %s", cfg.env, srv.Addr)
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	logger.Fatal(err)
+}
+
+// openDB() function returns an sql.DB connection pool
+func openDB(cfg config) (*sql.DB, error) {
+	log.Printf("opening database: %v", cfg.db.dsn)
+	db, err := sql.Open("sqlite3", cfg.db.dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a context with a 5 second timeout deadline.
+	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	defer cancel()
+
+	// Use PingContext() to establish a new connection to
+	// the database, passing in the context as a parameter.
+	// If connection is not established within the 5 
+	// second deadline, return an error.
+	err = db.PingContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return sql.DB connection pool
+	return db, nil
 }
