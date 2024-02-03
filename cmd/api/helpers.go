@@ -201,6 +201,6 @@ func (app *application) readJSON(
 		if err != io.EOF {
 			return errors.New("body must only contain a single JSON value")
 		}
-		
+
 		return nil
 }

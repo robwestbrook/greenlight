@@ -83,3 +83,18 @@ func (app *application) badRequestResponse(
 ) {
 	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 }
+
+// failedValidationResponse method
+// Writes a 422 Unprocessable Entity and the contents
+// of the error map.
+func (app *application) failedValidationResponse(
+	w http.ResponseWriter,
+	r *http.Request,
+	errors map[string]string,
+) {
+	app.errorResponse(
+		w, 
+		r, 
+		http.StatusUnprocessableEntity, 
+		errors)
+}

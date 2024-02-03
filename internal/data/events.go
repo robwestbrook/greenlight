@@ -1,6 +1,10 @@
 package data
 
-import "time"
+import (
+	"time"
+
+	"github.com/robwestbrook/greenlight/internal/validator"
+)
 
 // Event struct
 // Fields:
@@ -25,4 +29,13 @@ type Event struct {
 	CreatedAt		time.Time		`json:"created_at"`
 	UpdatedAt		time.Time		`json:"updated_at"`
 	Version			int32				`json:"version"`
+}
+
+// ValidateEvent runs the validator to validate
+// events
+func ValidateEvent(v *validator.Validator, event *Event) {
+	v.Check(event.Title != "", "title", "must be provided")
+	v.Check(len(event.Title) < 100, "title", "must not be more than 100 bytes long")
+	v.Check(len(event.Description) <= 500, "description", "must not be more than 500 bytes long")
+	v.Check(!event.Start.IsZero() || event.AllDay, "start", "if all day is false start must have a date")
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/robwestbrook/greenlight/internal/data"
+	"github.com/robwestbrook/greenlight/internal/validator"
 )
 
 /*
@@ -33,6 +34,26 @@ func (app *application) createEventHandler(w http.ResponseWriter, r *http.Reques
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	// Copy values from input struct to a new Event struct
+	event := &data.Event{
+		Title: input.Title,
+		Description: input.Description,
+		Tags: input.Tags,
+		AllDay: input.AllDay,
+		Start: app.stringToTime(input.Start),
+		End: app.stringToTime(input.End),
+	}
+
+	// Initialize a new Validator
+	v := validator.New()
+
+	// Call the ValidateEvent() function and return a
+	// response contianing errors if any checks fail
+	if data.ValidateEvent(v, event); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
