@@ -8,14 +8,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
-
-// dbTimeFormat defines the format used to convert
-// date and time to a SQLite-friendly datetime.
-const dbTimeFormat = "2006-01-02 15:04:05"
 
 // Define a JSON envelope type
 type envelope map[string]interface{}
@@ -23,15 +18,6 @@ type envelope map[string]interface{}
 /*
 	Helper functions for the application
 */
-
-// stringToTime function takes in a string defining the
-// time format and a time string from SQLite. It returns
-// a GO time.Time format.
-// A METHOD on the APPLICATION struct.
-func (app *application) stringToTime(stringToConvert string) time.Time {
-	res, _ := time.Parse(dbTimeFormat, stringToConvert)
-	return res
-}
 
 // Retrieve the "id" parameter from the current
 // request context, convert it to an integer, and

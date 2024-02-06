@@ -4,9 +4,9 @@ CREATE TABLE IF NOT EXISTS events(
   description TEXT NOT NULL,
   tags TEXT,
   all_day INTEGER NOT NULL,
-  start STRING,
-  end STRING,
-  created_at STRING,
-  updated_at STRING,
+  start DATETIME,
+  end DATETIME,
+  created_at DATETIME,
+  updated_at DATETIME,
   version INTEGER NOT NULL
 );

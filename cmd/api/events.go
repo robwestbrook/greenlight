@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/robwestbrook/greenlight/internal"
 	"github.com/robwestbrook/greenlight/internal/data"
 	"github.com/robwestbrook/greenlight/internal/validator"
 )
@@ -43,8 +44,8 @@ func (app *application) createEventHandler(w http.ResponseWriter, r *http.Reques
 		Description: input.Description,
 		Tags: input.Tags,
 		AllDay: input.AllDay,
-		Start: app.stringToTime(input.Start),
-		End: app.stringToTime(input.End),
+		Start: internal.StringToTime(input.Start),
+		End: internal.StringToTime(input.End),
 	}
 
 	// Initialize a new Validator
@@ -57,9 +58,36 @@ func (app *application) createEventHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Place the contents of the input struct into an
-	// HTTP response.
-	fmt.Fprintf(w, "%+v\n", input)
+	// Call the Events model Insert() method, passing a
+	// pointer to the validated event struct. This
+	// creates a record in the database and updates the
+	// event struct with system-generated info.
+	err = app.models.Events.Insert(event)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// With the HTTP response, include a Location header
+	// so the client knows which URL to find the resource.
+	// Create an empty http.Header map  and use the Set()
+	// method to add a new Location header, using the ID
+	// in the URL.
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/events/%d", event.ID))
+
+	// Write a JSON response with a 201 Created status code,
+	// the event in the response body, and the location
+	// header.
+	err = app.writeJSON(
+		w,
+		http.StatusCreated,
+		envelope{"event": event},
+		headers,
+	)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }
 
 // showEventHandler
@@ -80,8 +108,8 @@ func (app *application) showEventHandler(w http.ResponseWriter, r *http.Request)
 		Description: "This is a normal work day at Home Depot",
 		Tags:        []string{"work", "home depot"},
 		AllDay:      false,
-		Start:       app.stringToTime("2024-01-29 05:00:00"),
-		End:         app.stringToTime("2024-01-29 14:00:00"),
+		Start:       internal.StringToTime("2024-01-29 05:00:00"),
+		End:         internal.StringToTime("2024-01-29 14:00:00"),
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 		Version:     1,

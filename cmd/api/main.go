@@ -11,6 +11,7 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/robwestbrook/greenlight/internal/data"
 )
 
 // Declare a string containing the app version.
@@ -42,9 +43,11 @@ type config struct {
 // Dependencies:
 //  1. config - the config struct
 //  2. logger - System logger
+//	3. models = the models srtuct
 type application struct {
 	config config
 	logger *log.Logger
+	models data.Models
 }
 
 // main function - The entry point for the app.
@@ -93,9 +96,11 @@ func main() {
 	// Contains:
 	//	1.	cfg struct
 	//	2.	logger
+	//	3.	models - initialize a Models struct
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 
 	// Declare a new servermux.
