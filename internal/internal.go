@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
@@ -9,7 +10,7 @@ import (
 // date and time to a SQLite-friendly datetime.
 const dbTimeFormat = "2006-01-02 15:04:05"
 
-// stringToTime function takes in a time string 
+// StringToTime function takes in a time string 
 // from SQLite. It returns a GO time.Time format.
 // A METHOD on the APPLICATION struct.
 func StringToTime(stringToConvert string) time.Time {
@@ -21,7 +22,7 @@ func StringToTime(stringToConvert string) time.Time {
 	return time.Time{}
 }
 
-// timeToString function takes in the Go time.Time format
+// TimeToString function takes in the Go time.Time format
 // and returns a time string for SQLite.
 // A METHOD on the APPLICATION struct.
 func TimeToString(timeToCovert time.Time) string {
@@ -33,22 +34,25 @@ func TimeToString(timeToCovert time.Time) string {
 	return ""
 }
 
-// current function generates a GO time.Time
+// CurrentDate function generates a GO time.Time
 // for the current date and time.
 func CurrentDate() time.Time {
 	return time.Now()
 }
 
-// stringToSlice converts a comma-delimited string 
+// StringToSlice converts a comma-delimited string 
 // into a Go slice
-func StringToSlice(s string) []string {
-	if s != "" {
-		return strings.Split(s, ",")
+func StringToSlice(str *[]string) *[]string {
+	s := *str
+	var r []string
+	for _, x := range s {
+		fmt.Println("Slice Contents:", x)
+		r = append(r, x)
 	}
-	return nil
+	return &r
 }
 
-// sliceToString converts a Go slice into a
+// SliceToString converts a Go slice into a
 // comma-delimited string
 func SliceToString(s []string) string {
 	if s != nil {

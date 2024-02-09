@@ -2,6 +2,8 @@ package data
 
 import (
 	"database/sql"
+	"errors"
+	"strings"
 	"time"
 
 	"github.com/robwestbrook/greenlight/internal"
@@ -72,8 +74,6 @@ func (e EventModel) Insert(event *Event) error {
 		1,																	// version - starts with 1
 	}
 
-	// s := Scan{}
-
 	// Use QueryRow() method to execute the SQL query
 	// passing in the args slice. Scan in the returning
 	// values to the event struct.
@@ -82,7 +82,59 @@ func (e EventModel) Insert(event *Event) error {
 
 // Get fetches a specific record by ID from events table.
 func (e EventModel) Get(id int64) (*Event, error) {
-	return nil, nil
+	// Check that ID is not less than 1
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+
+	// Define the SQL query for retrieving event data
+	query := `
+		SELECT *
+		FROM events
+		WHERE id = ?
+	`
+
+	// Declare an Event struct to hold returned data
+	var event Event
+
+	// Declare a tag string variable to hold returned
+	// tags value. The tags are stored in the SQLite
+	// database as a comma-delimited string.
+	var tags string
+
+	// Execute the query with the QueryRow() method, 
+	// passing the ID. Scan the response data into the
+	// fields of the Event struct and tag variable.
+	err := e.DB.QueryRow(query, id).Scan(
+		&event.ID,
+		&event.Title,
+		&event.Description,
+		&tags,
+		&event.AllDay,
+		&event.Start,
+		&event.End,
+		&event.CreatedAt,
+		&event.UpdatedAt,
+		&event.Version,
+	)
+
+	// Convert tags to slice and add to event.Tags struct
+	event.Tags = strings.Split(tags, ",")
+
+	// If no matching event found, Scan() returns an
+	// sql.ErrNoRows error. Check and return custom
+	// ErrRecordNotFound error.
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	// If no errors, return pointer to Event struct.
+	return &event, nil
 }
 
 // Update updates a specific record by ID in 

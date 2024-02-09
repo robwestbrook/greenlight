@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/robwestbrook/greenlight/internal"
 	"github.com/robwestbrook/greenlight/internal/data"
@@ -100,19 +100,19 @@ func (app *application) showEventHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Create a new instance of the Event struct, containing
-	// the ID extracted from URL.
-	event := data.Event{
-		ID:          id,
-		Title:       "Work at Home Depot",
-		Description: "This is a normal work day at Home Depot",
-		Tags:        []string{"work", "home depot"},
-		AllDay:      false,
-		Start:       internal.StringToTime("2024-01-29 05:00:00"),
-		End:         internal.StringToTime("2024-01-29 14:00:00"),
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Version:     1,
+	// Call the Get() method to fetch data for a specific
+	// event. Use Errors.Is() to check if a 
+	// data.ErrRecordNotFound is returned. If so, send a
+	// 404 Not Found response to client.
+	event, err := app.models.Events.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
 	}
 
 	// Encode the event struct to JSON and send it as
