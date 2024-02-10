@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"strings"
@@ -74,10 +75,14 @@ func (e EventModel) Insert(event *Event) error {
 		1,																	// version - starts with 1
 	}
 
-	// Use QueryRow() method to execute the SQL query
-	// passing in the args slice. Scan in the returning
-	// values to the event struct.
-	return e.DB.QueryRow(query, args...).Scan(&event.ID, &event.CreatedAt, &event.UpdatedAt, &event.Version)
+	// Create a context with a 3 second timeout and defer.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Use QueryRowContext() method to execute the SQL query
+	// passing in the context, query, and args slice. 
+	// Scan in the returning values to the event struct.
+	return e.DB.QueryRowContext(ctx, query, args...).Scan(&event.ID, &event.CreatedAt, &event.UpdatedAt, &event.Version)
 }
 
 // Get fetches a specific record by ID from events table.
@@ -102,10 +107,21 @@ func (e EventModel) Get(id int64) (*Event, error) {
 	// database as a comma-delimited string.
 	var tags string
 
-	// Execute the query with the QueryRow() method, 
-	// passing the ID. Scan the response data into the
-	// fields of the Event struct and tag variable.
-	err := e.DB.QueryRow(query, id).Scan(
+	// Use the context.WithTimeout() function to create
+	// a context.Context which carries a 3 second
+	// timeout deadline. Use the empty context.Background
+	// as the "parent" context.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	// Use defer to make sure the context is cancelled
+	// before the Get() method returns.
+	defer cancel()
+
+	// Execute the query with the QueryRowContext() method, 
+	// passing the  context with deadline and ID. 
+	// Scan the response data into the fields of the 
+	// Event struct and tag variable.
+	err := e.DB.QueryRowContext(ctx, query, id).Scan(
 		&event.ID,
 		&event.Title,
 		&event.Description,
@@ -170,12 +186,16 @@ func (e EventModel) Update(event *Event) error {
 		event.Version,
 	}
 
-	// Use QueryRow() method to execute query. Pass the 
-	// args slice as a paramter and scan the new version
-	// into the event struct. If no row is found, the 
-	// event has been deleted or the version has changed,
-	// indicating a race condition.
-	err := e.DB.QueryRow(query, args...).Scan(&event.Version)
+	// Create a context with a 3 second timeout and defer.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Use QueryRowContext() method to execute query. 
+	// Pass the context, query, and args slice as paramters 
+	// and scan the new version into the event struct. 
+	// If no row is found, the  event has been deleted or 
+	// the version has changed, indicating a race condition.
+	err := e.DB.QueryRowContext(ctx, query, args...).Scan(&event.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -202,9 +222,13 @@ func (e EventModel) Delete(id int64) error {
 		WHERE id = ?
 	`
 
+	// Create a context with a 3 second timeout and defer.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// Execute the query using the Exec() method, passing
-	// in the ID.
-	result, err := e.DB.Exec(query, id)
+	// in the context, query, and ID.
+	result, err := e.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
