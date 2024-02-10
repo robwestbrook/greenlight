@@ -52,6 +52,13 @@ func (app *application) routes() *httprouter.Router {
 		app.showEventHandler,
 	)
 
+	// PUT update Event by ID route
+	router.HandlerFunc(
+		http.MethodPut,
+		"/v1/events/:id",
+		app.updateEventHandler,
+	)
+
 	// Return the router instance
 	return router
 }

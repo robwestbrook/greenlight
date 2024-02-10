@@ -140,7 +140,39 @@ func (e EventModel) Get(id int64) (*Event, error) {
 // Update updates a specific record by ID in 
 // the events table.
 func (e EventModel) Update(event *Event) error {
-	return nil
+	// Define the SQL query to update event
+	query := `
+		UPDATE events
+		SET 
+		title = ?, 
+		description = ?, 
+		tags = ?, 
+		all_day = ?,
+		start = ?,
+		end = ?,
+		updated_at = ?,
+		version = version + 1
+		WHERE id = ?
+		RETURNING version
+	`
+
+	// Create a args slice containing the values for the
+	// placeholder parameters.
+	args := []interface{}{
+		event.Title,
+		event.Description,
+		internal.SliceToString(event.Tags),
+		event.AllDay,
+		event.Start,
+		event.End,
+		internal.CurrentDate(),
+		event.ID,
+	}
+
+	// Use QueryRow() method to execute query. Pass the 
+	// args slice as a paramter and scan the new version
+	// into the event struct.
+	return e.DB.QueryRow(query, args...).Scan(&event.Version)
 }
 
 // Delete deletes a specific record by ID from 

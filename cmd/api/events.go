@@ -124,3 +124,81 @@ func (app *application) showEventHandler(w http.ResponseWriter, r *http.Request)
 		app.serverErrorResponse(w, r, err)
 	}
 }
+
+// updateEventHandler updates a record in database
+// A METHOD on the APPLICATION struct.
+func (app *application) updateEventHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract event ID from the URL
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
+	// Get the existing event record from the database.
+	// Send a 404 Not Found response if matching record
+	// is not found.
+	event, err := app.models.Events.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	// Declare an input struct to hold data from client
+	var input struct {
+		Title					string		`json:"title"`
+		Description		string		`json:"description"`
+		Tags 					[]string	`json:"tags"`
+		AllDay				bool			`json:"all_day"`
+		Start					string		`json:"start"`
+		End						string		`json:"end"`
+	}
+
+	// Read the JSON request body data into input struct.
+	err = app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	// Copy values from request body to corresponding
+	// fields of the event record.
+	event.Title = input.Title
+	event.Description = input.Description
+	event.Tags = input.Tags
+	event.AllDay = input.AllDay
+	event.Start = internal.StringToTime(input.Start)
+	event.End = internal.StringToTime(input.End)
+
+	// Validate the updated event record. Send the client
+	// a 422 Unprocessible Entity response if fails.
+	v := validator.New()
+
+	if data.ValidateEvent(v, event); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// Pass the updated event record to Update() method.
+	err = app.models.Events.Update(event)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// Write the updated event record in a JSON response.
+	err = app.writeJSON(
+		w,
+		http.StatusOK,
+		envelope{"event": event},
+		nil,
+	)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}

@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"strings"
 	"time"
 )
@@ -43,12 +42,19 @@ func CurrentDate() time.Time {
 // StringToSlice converts a comma-delimited string 
 // into a Go slice
 func StringToSlice(str *[]string) *[]string {
+	// Create a variable for the string slice passed in
 	s := *str
+
+	// Create a slice to hold the returned results
 	var r []string
+
+	// Loop over the string slice and append to returned
+	// slice
 	for _, x := range s {
-		fmt.Println("Slice Contents:", x)
 		r = append(r, x)
 	}
+
+	// Return a pointer to the result slice
 	return &r
 }
 
