@@ -7,8 +7,11 @@ import (
 
 // ErrRecordNotFound is returned when an event is
 // not found in the database.
+// ErrEditConflict is returned when a conflict race
+// condition happens in the database.
 var (
 	ErrRecordNotFound = errors.New("record not found")
+	ErrEditConflict = errors.New("edit conflict")
 )
 
 // Models is a struct which wraps all database models.

@@ -152,7 +152,7 @@ func (e EventModel) Update(event *Event) error {
 		end = ?,
 		updated_at = ?,
 		version = version + 1
-		WHERE id = ?
+		WHERE id = ? AND version = ?
 		RETURNING version
 	`
 
@@ -167,12 +167,24 @@ func (e EventModel) Update(event *Event) error {
 		event.End,
 		internal.CurrentDate(),
 		event.ID,
+		event.Version,
 	}
 
 	// Use QueryRow() method to execute query. Pass the 
 	// args slice as a paramter and scan the new version
-	// into the event struct.
-	return e.DB.QueryRow(query, args...).Scan(&event.Version)
+	// into the event struct. If no row is found, the 
+	// event has been deleted or the version has changed,
+	// indicating a race condition.
+	err := e.DB.QueryRow(query, args...).Scan(&event.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
+		}
+	}
+	return nil
 }
 
 // Delete deletes a specific record by ID from 
