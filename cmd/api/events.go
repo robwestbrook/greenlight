@@ -150,13 +150,16 @@ func (app *application) updateEventHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Declare an input struct to hold data from client
+	// Pointers have as their zero value: "nil". If an 
+	// input field doesn't have any value, we can check
+	// for zero value. The empty fields will be "nil". 
 	var input struct {
-		Title					string		`json:"title"`
-		Description		string		`json:"description"`
+		Title					*string		`json:"title"`
+		Description		*string		`json:"description"`
 		Tags 					[]string	`json:"tags"`
-		AllDay				bool			`json:"all_day"`
-		Start					string		`json:"start"`
-		End						string		`json:"end"`
+		AllDay				*bool			`json:"all_day"`
+		Start					*string		`json:"start"`
+		End						*string		`json:"end"`
 	}
 
 	// Read the JSON request body data into input struct.
@@ -168,12 +171,31 @@ func (app *application) updateEventHandler(w http.ResponseWriter, r *http.Reques
 
 	// Copy values from request body to corresponding
 	// fields of the event record.
-	event.Title = input.Title
-	event.Description = input.Description
-	event.Tags = input.Tags
-	event.AllDay = input.AllDay
-	event.Start = internal.StringToTime(input.Start)
-	event.End = internal.StringToTime(input.End)
+	// If input values are nil, no corresponding
+	// key/value pair was provided in the JSON request
+	// body. Therefore no changes are made. Since the
+	// input fields are pointers, they must be
+	// dereferenced, using the * operator.
+	if input.Title != nil {
+		event.Title = *input.Title
+	}
+	if input.Description != nil {
+		event.Description = *input.Description
+	}
+	// Tags are slices, which return nil if empty.
+	// No need to dereference.
+	if input.Tags != nil {
+		event.Tags = input.Tags
+	}
+	if input.AllDay != nil {
+		event.AllDay = *input.AllDay
+	}
+	if input.Start != nil {
+		event.Start = internal.StringToTime(*input.Start)
+	}
+	if input.End != nil {
+		event.End = internal.StringToTime(*input.End)
+	}
 
 	// Validate the updated event record. Send the client
 	// a 422 Unprocessible Entity response if fails.

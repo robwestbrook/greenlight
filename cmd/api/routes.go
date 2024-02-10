@@ -64,13 +64,13 @@ func (app *application) routes() *httprouter.Router {
 		app.showEventHandler,
 	)
 
-	// PUT update Event by ID route
+	// PATCH update Event by ID route
 	// Pattern					|		Handler						|		Action
 	//----------------------------------------------------
 	// /v1/events	/:id	|	updateEventHandler	| update event
 	//									|											| details
 	router.HandlerFunc(
-		http.MethodPut,
+		http.MethodPatch,
 		"/v1/events/:id",
 		app.updateEventHandler,
 	)
