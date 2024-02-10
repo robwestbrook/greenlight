@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/robwestbrook/greenlight/internal/validator"
 )
 
 // Define a JSON envelope type
@@ -189,4 +191,83 @@ func (app *application) readJSON(
 		}
 
 		return nil
+}
+
+
+// readString helper function returns a string value
+// from the query string, or the provided default value
+// if no matching key is found.
+// A METHOD on the APPLICATION struct.
+func (app *application) readString(
+	qs url.Values,
+	key string,
+	defaultValue string,
+) string {
+	// Extract the value for a given key from the query
+	// string. If no key exists, return the empty string ""
+	s := qs.Get(key)
+
+	// If no key exists, return the default value.
+	if s == "" {
+		return defaultValue
+	}
+
+	// If there is a key, return string
+	return s
+}
+
+// readCSV helper function reads a string value from the
+// query string and splits it into a slice on the comma
+// character. If no matching key is found, returns
+// the provided default value.
+// A METHOD on the APPLICATION struct.
+func (app *application) readCSV(
+	qs url.Values,
+	key string,
+	defaultValue []string,
+) [] string {
+	// Extract the value for the key
+	csv := qs.Get(key)
+
+	// If no key exists, return the default value.
+	if csv == "" {
+		return defaultValue
+	}
+
+	// Parse the value into a []string slice and return
+	return strings.Split(csv, ",")
+}
+
+// readInt helper function reads a string value from 
+// the query string and converts it to an integer
+// before returning. If no key is found, return
+// default value. If value cannot be converted to an
+// integer, record an error message to Validator
+// instance.
+// A METHOD on the APPLICATION struct.
+func (app *application) readInt(
+	qs url.Values,
+	key string,
+	defaultValue int,
+	v *validator.Validator,
+) int {
+	// Extract the value of key
+	s := qs.Get(key)
+
+	// If no key exists, return the default value.
+	if s == "" {
+		return defaultValue
+	}
+
+	// Convert value to an integer. If this fails, add
+	// an error message to validator instance and return
+	// default value.
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		v.AddError(key, "must be an integer value")
+		return defaultValue
+	}
+
+	// Return converted integer value.
+	return i
 }

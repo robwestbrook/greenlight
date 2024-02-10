@@ -1,6 +1,10 @@
 package validator
 
-import "regexp"
+import (
+	"regexp"
+
+	"golang.org/x/exp/slices"
+)
 
 // Define a regular expression for checking email
 // addresses.
@@ -59,4 +63,13 @@ func Unique(values []string) bool {
 	}
 
 	return len(values) == len(uniqueValues)
+}
+
+// In function returns true if a string value is found
+// within a string slice, otherwise false.
+func In(match string, safeList []string) bool {
+	if match != "" && safeList != nil {
+		return slices.Contains(safeList, match)
+	}
+	return false
 }

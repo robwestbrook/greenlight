@@ -248,5 +248,82 @@ func (e EventModel) Delete(id int64) error {
 	}
 
 	return nil
+}
 
+// GetAll() method returns a slice of events.
+func (e EventModel) GetAll(
+	title string,
+	tags	[]string,
+	filters 	Filters,
+) ([]*Event, error) {
+	// Build the SQL query to get all event records
+	query := `
+		SELECT *
+		FROM events
+		ORDER BY id
+	`
+
+	// Create a context with 3 second timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Use QueryContext() method to execute the query.
+	// An sql.Rows result set is returned containing
+	// the result.
+	rows, err := e.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a call to rows.Close()
+	defer rows.Close()
+
+	// Initialize an empty slice to hold event data
+	events := []*Event{}
+
+	// Use rows.Next to iterate over the rows in the
+	// result set.
+	for rows.Next() {
+		// Initialize an empty Event struct to hold
+		// each event
+		var event Event
+
+		// Initialize an empty Tag slice to hold 
+		// event tags
+		var tags string
+
+		// Scan values into movie struct.
+		err := rows.Scan(
+			&event.ID,
+			&event.Title,
+			&event.Description,
+			&tags,
+			&event.AllDay,
+			&event.Start,
+			&event.End,
+			&event.CreatedAt,
+			&event.UpdatedAt,
+			&event.Version,
+		)
+
+		// Convert tags to slice and add to event.Tags 
+		// struct
+		event.Tags = strings.Split(tags, ",")
+
+		if err != nil {
+			return nil, err
+		}
+
+		// Add Event struct to the events slice
+		events = append(events, &event)
+	}
+
+	// After rows.Next() loop is finished, call rows.Err()
+	// to get any error encountered during loop.
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// If everything goes OK, return slice of events.
+	return events, nil
 }

@@ -42,6 +42,16 @@ func (app *application) routes() *httprouter.Router {
 		"/v1/healthcheck",
 		app.healthcheckHandler,
 	)
+	// GET list events route
+	// Pattern					|		Handler						|		Action
+	//----------------------------------------------------
+	// /v1/events				|	listEventsHandler		| retrieve list
+	//									|											| of events
+	router.HandlerFunc(
+		http.MethodGet,
+		"/v1/events",
+		app.listEventsHandler,
+	)
 	// POST create Event route
 	// Pattern					|		Handler						|		Action
 	//----------------------------------------------------

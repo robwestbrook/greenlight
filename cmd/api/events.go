@@ -265,3 +265,87 @@ func (app *application) deleteEventHandler(w http.ResponseWriter, r *http.Reques
 		app.serverErrorResponse(w, r, err)
 	}
 }
+
+// listEventsHandler returns multiple events to client.
+// A METHOD on the APPLICATION struct.
+func (app *application) listEventsHandler(w http.ResponseWriter, r *http.Request) {
+	// Define an input struct to hold expected values
+	// from the request query string.
+	var input struct {
+		Title			string
+		Tags			[]string
+		data.Filters
+	}
+
+	// Initialize a new Validator instance
+	v := validator.New()
+
+	// Call r.URL.Query() method to get the URL.Values
+	// map containing the query string data.
+	qs := r.URL.Query()
+
+	// Use helpers to extract title and tags query string
+	// values, falling back to defaults. Defaults:
+	//	1.	title: ""
+	//	2.	tags: empty slice
+	input.Title = app.readString(qs, "title", "")
+	input.Tags = app.readCSV(qs, "tags", []string{})
+
+	// Use helpers to extract page and page_size query
+	// string values as integers. Read these values into
+	// the embedded Filters struct. Defaults:
+	//	1.	page: 1
+	//	2.	page_size: 20
+	input.Filters.Page = app.readInt(qs, "page", 1, v)
+	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
+
+	// Use helpers to extract the sort query string value.
+	// Read the value into the embedded Filters struct.
+	// Default:
+	//	1.	id
+	input.Filters.Sort = app.readString(qs, "sort", "id")
+
+	// Add supported values for sort to sort safelist
+	input.Filters.SortSafelist = []string{
+		"id",
+		"title",
+		"all_day",
+		"start",
+		"end",
+		"-id",
+		"-title",
+		"-all_day",
+		"-start",
+		"-end",
+	}
+	
+	// Execute the validation checks on the Filters
+	// struct, sending a response containing errors.
+	if data.ValidateFilters(v, input.Filters); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// Call the GetAll() method to get events,
+	// passing in filter parameters.
+	events, err := app.models.Events.GetAll(
+		input.Title,
+		input.Tags,
+		input.Filters,
+	)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// Send a JSON response containing the event data.
+	err = app.writeJSON(
+		w,
+		http.StatusOK,
+		envelope{"events": events},
+		nil,
+	)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
