@@ -33,12 +33,20 @@ func (app *application) routes() *httprouter.Router {
 	//	3.	Handler function
 
 	// GET health check route
+	// Pattern					|		Handler						|		Action
+	//----------------------------------------------------
+	// /v1/healthcheck	|	healthcheckHandler	| show app
+	//									|											| information
 	router.HandlerFunc(
 		http.MethodGet,
 		"/v1/healthcheck",
 		app.healthcheckHandler,
 	)
 	// POST create Event route
+	// Pattern					|		Handler						|		Action
+	//----------------------------------------------------
+	// /v1/events				|	createEventHandler	| create new
+	//									|											| event
 	router.HandlerFunc(
 		http.MethodPost,
 		"/v1/events",
@@ -46,6 +54,10 @@ func (app *application) routes() *httprouter.Router {
 	)
 
 	// GET get Event by ID route
+	// Pattern					|		Handler						|		Action
+	//----------------------------------------------------
+	// /v1/events	/:id	|	showEventHandler		| show event
+	//									|											| details
 	router.HandlerFunc(
 		http.MethodGet,
 		"/v1/events/:id",
@@ -53,10 +65,25 @@ func (app *application) routes() *httprouter.Router {
 	)
 
 	// PUT update Event by ID route
+	// Pattern					|		Handler						|		Action
+	//----------------------------------------------------
+	// /v1/events	/:id	|	updateEventHandler	| update event
+	//									|											| details
 	router.HandlerFunc(
 		http.MethodPut,
 		"/v1/events/:id",
 		app.updateEventHandler,
+	)
+
+	// DELETE delete Event by ID
+	// Pattern					|		Handler						|		Action
+	//----------------------------------------------------
+	// /v1/events	/:id	|	deleteEventHandler	| delete event
+	//									|											| by ID
+	router.HandlerFunc(
+		http.MethodDelete,
+		"/v1/events/:id",
+		app.deleteEventHandler,
 	)
 
 	// Return the router instance

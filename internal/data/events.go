@@ -178,5 +178,39 @@ func (e EventModel) Update(event *Event) error {
 // Delete deletes a specific record by ID from 
 // the events table.
 func (e EventModel) Delete(id int64) error {
+	// Return an ErrRecordNotFound error if event ID
+	// is less than 1
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+
+	// Build SQL query
+	query := `
+		DELETE FROM events
+		WHERE id = ?
+	`
+
+	// Execute the query using the Exec() method, passing
+	// in the ID.
+	result, err := e.DB.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	// Call the RowsAffected() method on the sql.Result
+	// object to get number of rows affected by query.
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	// If no rows affected, the events table did not
+	// contain a record with the ID. Return an
+	// ErrRecordNotFound error.
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
 	return nil
+
 }
