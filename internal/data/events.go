@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -40,6 +41,15 @@ type Event struct {
 // EventModel struct wraps an sql.DB connection pool.
 type EventModel struct {
 	DB 	*sql.DB
+}
+
+// Metadata struct for holding pagination data.
+type Metadata struct {
+	CurrentPage		int		`json:"current_page,omitempty"`
+	PageSize			int		`json:"page_size,omitempty"`
+	FirstPage			int		`json:"first_page,omitempty"`
+	LastPage			int		`json:"last_page,omitempty"`
+	TotalRecords	int		`json:"total_records,omitempty"`
 }
 
 // ValidateEvent runs the validator to validate
@@ -257,10 +267,10 @@ func (e EventModel) GetAll(
 	description string,
 	tags	[]string,
 	filters 	Filters,
-) ([]*Event, error) {
+) ([]*Event, Metadata, error) {
 	// Build the SQL query to get all event records
 	query := fmt.Sprintf(`
-		SELECT *
+		SELECT COUNT (*) OVER(), *
 		FROM events
 		WHERE (
 			INSTR(LOWER(title), LOWER(?)) 
@@ -301,11 +311,14 @@ func (e EventModel) GetAll(
 	// the result. 
 	rows, err := e.DB.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 
 	// Defer a call to rows.Close()
 	defer rows.Close()
+
+	// Initialize a totalRecords variable
+	totalRecords := 0
 
 	// Initialize an empty slice to hold event data
 	events := []*Event{}
@@ -323,6 +336,7 @@ func (e EventModel) GetAll(
 
 		// Scan values into movie struct.
 		err := rows.Scan(
+			&totalRecords,
 			&event.ID,
 			&event.Title,
 			&event.Description,
@@ -340,7 +354,7 @@ func (e EventModel) GetAll(
 		event.Tags = strings.Split(tags, ",")
 
 		if err != nil {
-			return nil, err
+			return nil, Metadata{}, err
 		}
 
 		// Add Event struct to the events slice
@@ -350,9 +364,41 @@ func (e EventModel) GetAll(
 	// After rows.Next() loop is finished, call rows.Err()
 	// to get any error encountered during loop.
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 
+	// Generate a Metadata struct, passing in total
+	// record count and pagination parameters
+	metadata := calculateMetadata(
+		totalRecords,
+		filters.Page,
+		filters.PageSize,
+	)
+
 	// If everything goes OK, return slice of events.
-	return events, nil
+	return events, metadata, nil
+}
+
+// calculateMetadata() function calculates the
+// appropriate pagination metadata values given:
+//	1.	Total number of records
+//	2.	Current page
+//	3.	Page size
+// The last page is calculated using the math.Ceil()
+// function, which rounds up.
+func calculateMetadata(
+	totalRecords, page, pageSize int,
+) Metadata {
+	if totalRecords == 0 {
+		// Return empty Metadata struct if no records
+		return Metadata{}
+	}
+
+	return Metadata{
+		CurrentPage: page,
+		PageSize: pageSize,
+		FirstPage: 1,
+		LastPage: int(math.Ceil(float64(totalRecords) / float64(pageSize))),
+		TotalRecords: totalRecords,
+	}
 }

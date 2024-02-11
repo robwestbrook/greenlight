@@ -331,7 +331,7 @@ func (app *application) listEventsHandler(w http.ResponseWriter, r *http.Request
 
 	// Call the GetAll() method to get events,
 	// passing in filter parameters.
-	events, err := app.models.Events.GetAll(
+	events, metadata, err := app.models.Events.GetAll(
 		input.Title,
 		input.Description,
 		input.Tags,
@@ -346,7 +346,7 @@ func (app *application) listEventsHandler(w http.ResponseWriter, r *http.Request
 	err = app.writeJSON(
 		w,
 		http.StatusOK,
-		envelope{"events": events},
+		envelope{"events": events, "metadata": metadata},
 		nil,
 	)
 	if err != nil {
