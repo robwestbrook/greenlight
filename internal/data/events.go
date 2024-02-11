@@ -269,6 +269,7 @@ func (e EventModel) GetAll(
 		AND INSTR(LOWER(description), LOWER(?))
 		AND INSTR(tags, ?) 
 		ORDER BY %s %s, id ASC
+		LIMIT ? OFFSET ?
 	`,
 	filters.sortColumn(), 
 	filters.sortDirection(),
@@ -278,23 +279,27 @@ func (e EventModel) GetAll(
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	// Use QueryContext() method to execute the query.
-	// An sql.Rows result set is returned containing
-	// the result. QueryContext Paramters:
-	//	1.	ctx: context
-	//	2.	query: query string
-	//	3.	title: title passed in to function (used twice)
-	//	4.	title: title passed in to function (used twice)
-	//	5.	description: description passed in to function
-	//	6.	tags: convert tag slice passed in to string
-	rows, err := e.DB.QueryContext(
-		ctx, 
-		query, 
+	// Put all placeholder parameters in a slice.
+	// Placeholder Paramters:
+	//	1.	title: title passed in to function (used twice)
+	//	2.	title: title passed in to function (used twice)
+	//	3.	description: description passed in to function
+	//	4.	tags: convert tag slice passed in to string
+	//	5.	limit: the limit of records from filter
+	//	6.	offset: the offset from filter
+	args := []interface{}{
 		title, 
 		title, 
 		description,
 		internal.SliceToString(tags),
-	)
+		filters.limit(),
+		filters.offset(),
+	}
+
+	// Use QueryContext() method to execute the query.
+	// An sql.Rows result set is returned containing
+	// the result. 
+	rows, err := e.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

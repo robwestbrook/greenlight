@@ -41,6 +41,16 @@ func (f Filters) sortDirection() string {
 	return "ASC"
 }
 
+// limit returns the page size
+func (f Filters) limit() int {
+	return f.PageSize
+}
+
+// offSet calculates the offset for pagination.
+func (f Filters) offset() int {
+	return (f.Page - 1) * f.PageSize
+}
+
 // ValidateFilters function performs sanity checks on
 // the query string values.
 func ValidateFilters(v *validator.Validator, f Filters) {
