@@ -253,6 +253,7 @@ func (e EventModel) Delete(id int64) error {
 // GetAll() method returns a slice of events.
 func (e EventModel) GetAll(
 	title string,
+	description string,
 	tags	[]string,
 	filters 	Filters,
 ) ([]*Event, error) {
@@ -260,6 +261,12 @@ func (e EventModel) GetAll(
 	query := `
 		SELECT *
 		FROM events
+		WHERE (
+			INSTR(LOWER(title), LOWER(?)) 
+			OR ? = ''
+		)
+		AND INSTR(LOWER(description), LOWER(?))
+		AND INSTR(tags, ?) 
 		ORDER BY id
 	`
 
@@ -269,8 +276,21 @@ func (e EventModel) GetAll(
 
 	// Use QueryContext() method to execute the query.
 	// An sql.Rows result set is returned containing
-	// the result.
-	rows, err := e.DB.QueryContext(ctx, query)
+	// the result. QueryContext Paramters:
+	//	1.	ctx: context
+	//	2.	query: query string
+	//	3.	title: title passed in to function (used twice)
+	//	4.	title: title passed in to function (used twice)
+	//	5.	description: description passed in to function
+	//	6.	tags: convert tag slice passed in to string
+	rows, err := e.DB.QueryContext(
+		ctx, 
+		query, 
+		title, 
+		title, 
+		description,
+		internal.SliceToString(tags),
+	)
 	if err != nil {
 		return nil, err
 	}

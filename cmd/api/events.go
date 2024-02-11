@@ -272,8 +272,9 @@ func (app *application) listEventsHandler(w http.ResponseWriter, r *http.Request
 	// Define an input struct to hold expected values
 	// from the request query string.
 	var input struct {
-		Title			string
-		Tags			[]string
+		Title				string
+		Description	string
+		Tags				[]string
 		data.Filters
 	}
 
@@ -287,8 +288,10 @@ func (app *application) listEventsHandler(w http.ResponseWriter, r *http.Request
 	// Use helpers to extract title and tags query string
 	// values, falling back to defaults. Defaults:
 	//	1.	title: ""
-	//	2.	tags: empty slice
+	//	2.	description: ""
+	//	3.	tags: empty slice
 	input.Title = app.readString(qs, "title", "")
+	input.Description = app.readString(qs, "description", "")
 	input.Tags = app.readCSV(qs, "tags", []string{})
 
 	// Use helpers to extract page and page_size query
@@ -330,6 +333,7 @@ func (app *application) listEventsHandler(w http.ResponseWriter, r *http.Request
 	// passing in filter parameters.
 	events, err := app.models.Events.GetAll(
 		input.Title,
+		input.Description,
 		input.Tags,
 		input.Filters,
 	)
