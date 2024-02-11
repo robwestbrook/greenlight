@@ -1,6 +1,10 @@
 package data
 
-import "github.com/robwestbrook/greenlight/internal/validator"
+import (
+	"strings"
+
+	"github.com/robwestbrook/greenlight/internal/validator"
+)
 
 // Filters type
 type Filters struct {
@@ -8,6 +12,33 @@ type Filters struct {
 	PageSize			int
 	Sort 					string
 	SortSafelist	[]string
+}
+
+// sortColumn function verifies the client-supplied
+// Sort field matches with the safe list. If it does,
+// extract the column name from the sort field.
+func (f Filters) sortColumn() string {
+	// Loop over the safelist
+	for _, safeValue := range f.SortSafelist {
+		// If the sort string equals a safelist entry
+		// return the sort string, stipped of any "-".
+		if f.Sort == safeValue {
+			return strings.TrimPrefix(f.Sort, "-")
+		}
+	}
+	// Failsafe to stop SQL injection
+	panic("unsafe sort parameter: " + f.Sort)
+}
+
+// sortDirection function ("ASC" or "DESC") depending
+// on prefix character of the Sort field.
+func (f Filters) sortDirection() string {
+	// If sort string has a "-" it is descending.
+	if strings.HasPrefix(f.Sort, "-") {
+		return "DESC"
+	}
+	// If sort string has no "-", it is ascending.
+	return "ASC"
 }
 
 // ValidateFilters function performs sanity checks on

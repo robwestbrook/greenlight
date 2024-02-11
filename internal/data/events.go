@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -258,7 +259,7 @@ func (e EventModel) GetAll(
 	filters 	Filters,
 ) ([]*Event, error) {
 	// Build the SQL query to get all event records
-	query := `
+	query := fmt.Sprintf(`
 		SELECT *
 		FROM events
 		WHERE (
@@ -267,8 +268,11 @@ func (e EventModel) GetAll(
 		)
 		AND INSTR(LOWER(description), LOWER(?))
 		AND INSTR(tags, ?) 
-		ORDER BY id
-	`
+		ORDER BY %s %s, id ASC
+	`,
+	filters.sortColumn(), 
+	filters.sortDirection(),
+	)
 
 	// Create a context with 3 second timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
