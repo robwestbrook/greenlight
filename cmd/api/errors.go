@@ -90,6 +90,7 @@ func (app *application) badRequestResponse(
 // failedValidationResponse method
 // Writes a 422 Unprocessable Entity and the contents
 // of the error map.
+// A METHOD on the APPLICATION struct.
 func (app *application) failedValidationResponse(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -104,10 +105,21 @@ func (app *application) failedValidationResponse(
 
 // editConflictResponse method.
 // Writes a 409 Conflict and plain English message.
+// A METHOD on the APPLICATION struct.
 func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Request) {
 	message := `
 		unable to update the record due to and edit
 		conflict, please try again
 	`
 	app.errorResponse(w, r, http.StatusConflict, message)
+}
+
+// rateLimitExceededResponse method.
+// A METHOD on the APPLICATION struct.
+func (app *application) rateLimitExceededResponse(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	message := "rate limit exceeded"
+	app.errorResponse(w, r, http.StatusTooManyRequests, message)
 }

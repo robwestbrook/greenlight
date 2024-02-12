@@ -99,7 +99,8 @@ func (app *application) routes() http.Handler {
 		app.deleteEventHandler,
 	)
 
-	// Return the router instance wrapped in
-	// the recoverPanic middleware function.
-	return app.recoverPanic(router)
+	// Return the router instance wrapped in middleware:
+	// 	1. Recover Panic middleware
+	//	2.	Rate Limiter middleware
+	return app.recoverPanic(app.rateLimit(router))
 }
