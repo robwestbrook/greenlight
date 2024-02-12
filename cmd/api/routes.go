@@ -10,8 +10,11 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// routes Function sets up the router for the app.
+// The router is wrapped in middleware, so that the
+// middleware wuns for every api endpoint.
 // A METHOD on the APPLICATION struct.
-func (app *application) routes() *httprouter.Router {
+func (app *application) routes() http.Handler {
 	// Initialize a new httprouter router instance
 	router := httprouter.New()
 
@@ -96,6 +99,7 @@ func (app *application) routes() *httprouter.Router {
 		app.deleteEventHandler,
 	)
 
-	// Return the router instance
-	return router
+	// Return the router instance wrapped in
+	// the recoverPanic middleware function.
+	return app.recoverPanic(router)
 }
