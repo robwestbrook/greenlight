@@ -29,6 +29,10 @@ const version = "1.0.0"
 //		b.	maxOpenConns - upper limit on open connections
 //		c.	maxIdleConns - upper limit on idle connections
 //		d.	maxIdleTime - set max time connection can be idle before expires
+//	4. limiter - rate limiter config settings
+//		a.	rps - requests per second
+//		b.	burst - burst values
+//		c.	enabled - enable/disable race limiting
 type config struct {
 	port int
 	env  string
@@ -37,6 +41,11 @@ type config struct {
 		maxOpenConns	int
 		maxIdleConns	int
 		maxIdleTime		string
+	}
+	limiter struct {
+		rps			float64
+		burst		int
+		enabled	bool
 	}
 }
 
@@ -64,12 +73,18 @@ func main() {
 	// 	4.	Max open DB connections (default: 25)
 	//	5.	Max idle DB connections (default: 25)
 	//	6.	Max DB idle time (default: 15 minutes)
+	//	7.	Rate limiter requests per second (default: 2)
+	//	8.	Rate Limiter  bursts (default: 4)
+	//	9.	Rate limiter enabled (default: true)
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
 	flag.StringVar(&cfg.db.dsn, "db-dsn", "greenlight.db", "SQLite database name")
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "SQLite max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "SQLite max idle connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "SQLite max connection idle time")
+	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
+	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
+	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
 
 	flag.Parse()
 

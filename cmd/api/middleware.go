@@ -47,13 +47,13 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 	// Define a client struct to hold the rate limiter
 	// and last seen time for each client.
 	type client struct {
-		limiter			*rate.Limiter
-		lastSeen		time.Time
+		limiter  *rate.Limiter
+		lastSeen time.Time
 	}
-	
+
 	// Create a mutex and map to hold the client struct.
 	var (
-		mu		sync.Mutex
+		mu      sync.Mutex
 		clients = make(map[string]*client)
 	)
 
@@ -80,56 +80,62 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 			mu.Unlock()
 		}
 	}()
-	
+
 	// The function returned is a closure, which
 	// "closes over" the limiter variable.
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Extract the client's IP address from the request.
-		ip, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			app.serverErrorResponse(w, r, err)
-			return
-		}
+		// Only rate limit if it is enabled
+		if app.config.limiter.enabled {
+			// Extract the client's IP address from the request.
+			ip, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				app.serverErrorResponse(w, r, err)
+				return
+			}
 
-		// Lock the mutex to prevent this code from being
-		// executed concurrently.
-		mu.Lock()
+			// Lock the mutex to prevent this code from being
+			// executed concurrently.
+			mu.Lock()
 
-		// Check if IP address already exists in the client
-		// map. If not, initialize a new rate limiter and
-		// add the IP address and limiter to the map.
-		// Limiter parameters:
-		//	1.	no more than average of 2 requests per second.
-		//	2.	maximum of 4 requests in a "burst".
-		if _, found := clients[ip]; !found {
+			// Check if IP address already exists in the client
+			// map. If not, initialize a new rate limiter and
+			// add the IP address and limiter to the map.
+			// Limiter parameters:
+			//	1.	no more than average of 2 requests per second.
+			//	2.	maximum of 4 requests in a "burst".
+			if _, found := clients[ip]; !found {
 
-			// Create and add a new client struct to the map
-			// if it does not already exist.
-			clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
-		}
+				// Create and add a new client struct to the map
+				// if it does not already exist. Use the
+				// requests per second and burst values from
+				// the config struct.
+				clients[ip] = &client{
+					limiter: rate.NewLimiter(rate.Limit(app.config.limiter.rps),
+						app.config.limiter.burst),
+				}
+			}
+			// Update the last seen time for the client.
+			clients[ip].lastSeen = time.Now()
 
-		// Update the last seen time for the client.
-		clients[ip].lastSeen = time.Now()
+			// Call the limiter.Allow() method to check if the request is
+			// permitted. Whenever the limiter.Allow() method
+			// is called, exactly one token will be consumed
+			// from the bucket. If no tokens are left in the
+			// bucket, call the rateLimitExceededResponse()
+			// helper to return a 429 Too Many Requests response.
+			if !clients[ip].limiter.Allow() {
+				mu.Unlock()
+				app.rateLimitExceededResponse(w, r)
+				return
+			}
 
-
-		// Call the limiter.Allow() method to check if the request is
-		// permitted. Whenever the limiter.Allow() method
-		// is called, exactly one token will be consumed
-		// from the bucket. If no tokens are left in the
-		// bucket, call the rateLimitExceededResponse()
-		// helper to return a 429 Too Many Requests response.
-		if !clients[ip].limiter.Allow() {
+			// Unlock the mutex before calling the next handler
+			// in the chain. DO NOT defer to unlock the mutex.
+			// This would mean the mutex is not unlocked until
+			// all handlers downstream of this middleware have
+			// also returned.
 			mu.Unlock()
-			app.rateLimitExceededResponse(w, r)
-			return
 		}
-
-		// Unlock the mutex before calling the next handler
-		// in the chain. DO NOT defer to unlock the mutex.
-		// This would mean the mutex is not unlocked until
-		// all handlers downstream of this middleware have
-		// also returned.
-		mu.Unlock()
 		next.ServeHTTP(w, r)
 	})
 }
