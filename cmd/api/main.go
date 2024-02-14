@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -96,6 +94,7 @@ func main() {
 	// Call openDB() function to create connection pool,
 	// passing in the config struct. If error returns,
 	// log it and exit app immediately.
+	logger.PrintInfo("Opening database connection pool", nil)
 	db, err := openDB(cfg)
 	if err != nil {
 		logger.PrintFatal(err, nil)
@@ -125,37 +124,15 @@ func main() {
 	// Health Check route
 	mux.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
 
-	// Declare an HTTP server.
-	// Parameters:
-	//	1.	Addr: server port
-	//	2.	Handler: use the httprouter in the routes file
-	//	3.	ErrorLog: a new Go logger instance with the
-	//								custom logger. The "" and 0 indicate
-	//								no logger prefix or any flags.
-	//	4.	IdleTimeout
-	//	5.	ReadTimeout
-	//	6.	WriteTimeout
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      app.routes(),
-		ErrorLog: 		log.New(logger, "", 0),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+	// Call app.serve(), in server.go to start server.
+	err = app.serve()
+	if err != nil {
+		logger.PrintFatal(err, nil)
 	}
-
-	// Start the HTTP server.
-	logger.PrintInfo("starting server", map[string]string{
-		"addr": srv.Addr,
-		"env": cfg.env,
-	})
-	err = srv.ListenAndServe()
-	logger.PrintFatal(err, nil)
 }
 
 // openDB() function returns an sql.DB connection pool
 func openDB(cfg config) (*sql.DB, error) {
-	log.Printf("opening database: %v", cfg.db.dsn)
 	db, err := sql.Open("sqlite3", cfg.db.dsn)
 	if err != nil {
 		return nil, err
