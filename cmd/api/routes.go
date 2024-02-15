@@ -91,12 +91,22 @@ func (app *application) routes() http.Handler {
 	// DELETE delete Event by ID
 	// Pattern					|		Handler						|		Action
 	//----------------------------------------------------
-	// /v1/events	/:id	|	deleteEventHandler	| delete event
+	// /v1/events/:id	|	deleteEventHandler	| delete event
 	//									|											| by ID
 	router.HandlerFunc(
 		http.MethodDelete,
 		"/v1/events/:id",
 		app.deleteEventHandler,
+	)
+
+	// POST Register new user
+	// Pattern					|		Handler						|		Action
+	//----------------------------------------------------
+	// /v1/users				|	registerUserHandler	| register user
+	router.HandlerFunc(
+		http.MethodPost,
+		"/v1/users",
+		app.registerUserHandler,
 	)
 
 	// Return the router instance wrapped in middleware:

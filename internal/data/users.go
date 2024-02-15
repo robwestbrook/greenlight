@@ -56,7 +56,7 @@ func (m UserModel) Insert(user *User) error {
 	query := `
 		INSERT INTO users (name, email, password_hash, activated, created_at, updated_at, version)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
-		RETURNING id, created_at, version
+		RETURNING id, created_at, updated_at, version
 	`;
 
 	// Create an args variable to hold the client input.
@@ -83,6 +83,7 @@ func (m UserModel) Insert(user *User) error {
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
 		&user.ID,
 		&user.CreatedAt,
+		&user.UpdatedAt,
 		&user.Version,
 	)
 	if err != nil {
