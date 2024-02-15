@@ -6,6 +6,12 @@ In the book, a movie API is built. I changed this to an event API, which I hope 
 The book uses **Postgres** as the database. This repository, instead, uses **Sqlite**. There are some modifications and additions made to the book's code to accomodate this change. These are documented within the code.
 
 ### Using Migrate CLI
-The command-line statement to use for migration:
+The command-line statements to use for database migration.
+
+To create a migration:
+
+     migrate create -seq -ext=.sql -dir=./migrations create_users_table
+
+To run a migration (use up or down):
 
     migrate -path=./migrations -database=sqlite3://greenlight.db -verbose up
