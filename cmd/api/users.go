@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/robwestbrook/greenlight/internal/data"
@@ -83,18 +84,35 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		app.serverErrorResponse(w, r, err)
 	}
 
-	// Call the Send() method on the Mailer, passing in
-	// the user's email address, name of the template file,
-	// and the User struct containing the new use's data.
-	err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
+	// Create a background Goroutine to run mailer in 
+	// a separate routine.
+	go func() {
 
+		// Run a deferred function which uses recover()
+		// to catch any panic, and log an error message
+		// instead of terminating the application.
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.PrintError(fmt.Errorf("%s", err), nil)
+			}
+		}()
+
+		// Call the Send() method on the Mailer, passing in
+		// the user's email address, name of the template file,
+		// and the User struct containing the new use's data.
+		err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
+		if err != nil {
+			app.logger.PrintError(err, nil)
+		}
+	}()
+	
+	// Send client a 202 Accepted status code. This status
+	// code indicates the request has been accepted for
+	// processing, but the processing has not been
+	// completed.
 	err = app.writeJSON(
 		w,
-		http.StatusCreated,
+		http.StatusAccepted,
 		envelope{"user": user},
 		nil,
 	)
