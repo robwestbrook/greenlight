@@ -88,7 +88,7 @@ func (m UserModel) Insert(user *User) error {
 	)
 	if err != nil {
 		switch {
-			case err.Error() == `Error: UNIQUE constraint failed`:
+			case err.Error() == `UNIQUE constraint failed: users.email`:
 				return ErrDuplicateEmail
 			default:
 				return err
