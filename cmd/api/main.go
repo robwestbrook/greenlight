@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -70,11 +71,13 @@ type config struct {
 //  2. logger - System logger
 //	3. models - the models struct
 // 	4. mailer - the mailer struct
+//	5. wg - wait group for goroutine monitoring
 type application struct {
 	config config
 	logger *jsonlog.Logger
 	models data.Models
 	mailer mailer.Mailer
+	wg sync.WaitGroup
 }
 
 // main function - The entry point for the app.

@@ -72,7 +72,26 @@ func (app *application) serve() error {
 		// context. Shutdown() will return nil if the 
 		// graceful shutdown is successful, or an error.
 		// This is relayed to the shutdownError channel.
-		shutdownError <- srv.Shutdown(ctx)
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			shutdownError <- err
+		}
+
+		// Log a message for waiting for any background
+		// goroutines to complete their tasks.
+		app.logger.PrintInfo(
+			"completing background tasks",
+			map[string]string{
+				"addr": srv.Addr,
+			},
+		)
+
+		// Call Wait() to block until the WaitGroup counter
+		// is zero. Then return nil on the shutdowmError
+		// channel, to indicate the shutdown completed
+		// without any issues.
+		app.wg.Wait()
+		shutdownError <- nil
 	}()
 
 	// Log a "starting server" message.
