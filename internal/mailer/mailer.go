@@ -15,8 +15,11 @@ import (
 // above it, which indicates to Go the contents of the
 // ./templates directory is where to store the
 // embedded file system variable.
+// The "go embed" directive can only be used on global
+// variables. The <path> should be relative to the
+// source code file containing the directive.
 
-// go:embed "template"
+//go:embed "templates"
 var templateFS embed.FS
 
 // Mailer is a struct containing the mail.Dialer
@@ -63,7 +66,7 @@ func (m Mailer) Send(
 	// template file from the embedded file system.
 	tmpl, err := template.New("email").ParseFS(
 		templateFS,
-		"templates/" + templateFile,
+		"templates/"+templateFile,
 	)
 	if err != nil {
 		return err
@@ -82,7 +85,7 @@ func (m Mailer) Send(
 	// the dynamic data and storing the result in a
 	// bytes.Buffer variable.
 	plainBody := new(bytes.Buffer)
-	err = tmpl.ExecuteTemplate(plainBody, "plainbody", data)
+	err = tmpl.ExecuteTemplate(plainBody, "plainBody", data)
 	if err != nil {
 		return err
 	}

@@ -4,13 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"flag"
+	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
+	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/robwestbrook/greenlight/internal/data"
 	"github.com/robwestbrook/greenlight/internal/jsonlog"
+	"github.com/robwestbrook/greenlight/internal/mailer"
 )
 
 // Declare a string containing the app version.
@@ -31,6 +35,12 @@ const version = "1.0.0"
 //		a.	rps - requests per second
 //		b.	burst - burst values
 //		c.	enabled - enable/disable race limiting
+//	5. smtp - email mailer config settings
+//		a.	host - URL address for mailing host
+//		b.	port - Host SMTP port
+//		c.	username - username on host
+//		d.	password - password on host
+//		e.	sender - sender info used on host
 type config struct {
 	port int
 	env  string
@@ -45,21 +55,44 @@ type config struct {
 		burst		int
 		enabled	bool
 	}
+	smtp struct {
+		host 			string
+		port			int
+		username	string
+		password	string
+		sender		string
+	}
 }
 
 // Define an app struct to hold dependencies.
 // Dependencies:
 //  1. config - the config struct
 //  2. logger - System logger
-//	3. models = the models srtuct
+//	3. models - the models struct
+// 	4. mailer - the mailer struct
 type application struct {
 	config config
 	logger *jsonlog.Logger
 	models data.Models
+	mailer mailer.Mailer
 }
 
 // main function - The entry point for the app.
 func main() {
+	// Load and read .env
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort, err := strconv.Atoi(os.Getenv("SMTP_PORT"))
+	if err != nil {
+		log.Fatal("Error converting PORT env to integer")
+	}
+	smtpUsername := os.Getenv("SMTP_USERNAME")
+	smtpPassword := os.Getenv("SMTP_PASSWORD")
+	smtpSender := os.Getenv("SMTP_SENDER")
+
 	// Declare an instance of config struct
 	var cfg config
 
@@ -74,6 +107,11 @@ func main() {
 	//	7.	Rate limiter requests per second (default: 2)
 	//	8.	Rate Limiter  bursts (default: 4)
 	//	9.	Rate limiter enabled (default: true)
+	// 10.	SMTP host (default: .env host)
+	// 11.	SMTP port (default: .env port)
+	// 11.	SMTP username (default: .env username)
+	// 11.	SMTP password (default: .env password)
+	// 11.	SMTP sender (default: .env sender)
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
 	flag.StringVar(&cfg.db.dsn, "db-dsn", "greenlight.db", "SQLite database name")
@@ -83,6 +121,11 @@ func main() {
 	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
 	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
 	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
+	flag.StringVar(&cfg.smtp.host, "smtp-host", smtpHost, "SMTP host")
+	flag.IntVar(&cfg.smtp.port, "smtp-port", smtpPort, "SMTP port")
+	flag.StringVar(&cfg.smtp.username, "smtp-username", smtpUsername, "SMTP username")
+	flag.StringVar(&cfg.smtp.password, "smtp-password", smtpPassword, "SMTP password")
+	flag.StringVar(&cfg.smtp.sender, "smtp-sender", smtpSender, "SMTP sender")
 
 	flag.Parse()
 
@@ -112,10 +155,18 @@ func main() {
 	//	1.	cfg struct
 	//	2.	logger
 	//	3.	models - initialize a Models struct
+	//	4.	mailer - initialize a new Mailer instance
 	app := &application{
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db),
+		mailer: mailer.New(
+			cfg.smtp.host,
+			cfg.smtp.port,
+			cfg.smtp.username,
+			cfg.smtp.password,
+			cfg.smtp.sender,
+		),
 	}
 
 	// Declare a new servermux.
