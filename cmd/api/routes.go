@@ -109,6 +109,16 @@ func (app *application) routes() http.Handler {
 		app.registerUserHandler,
 	)
 
+	// PUT Activate a new user
+	// Pattern						|		Handler						|		Action
+	//----------------------------------------------------
+	// /v1/users/activated|	activateUserHandler	| activate user
+	router.HandlerFunc(
+		http.MethodPut,
+		"/v1/users/activated",
+		app.activateUserHandler,
+	)
+
 	// Return the router instance wrapped in middleware:
 	// 	1. Recover Panic middleware
 	//	2.	Rate Limiter middleware

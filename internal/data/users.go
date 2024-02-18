@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/robwestbrook/greenlight/internal"
@@ -48,7 +49,7 @@ type password struct {
 	hash      []byte
 }
 
-// Insert() a new record in the database for the user.
+// Insert a new record in the database for the user.
 // Use the RETURNING clause to read the ID, created_at,
 // and version into the Yser struct after the insert.
 func (m UserModel) Insert(user *User) error {
@@ -164,13 +165,13 @@ func (m UserModel) Update(user *User) error {
 
 	// Create an args variable to hold user input
 	args := []interface{}{
-		user.ID,
 		user.Name,
 		user.Email,
 		user.Password.hash,
 		user.Activated,
 		user.CreatedAt,
 		user.UpdatedAt,
+		user.ID,
 		user.Version,
 	}
 
@@ -233,6 +234,92 @@ func (p *password) Matches(plaintextPassword string) (bool, error) {
 		}
 	}
 	return true, nil
+}
+
+// GetForToken retrieves a user token from the database.
+func (m UserModel) GetForToken(
+	tokenScope string,
+	tokenPlaintext string,
+) (*User, error) {
+
+	// Compose the SQL query.
+	// Use INNER JOIN to join together information from
+	// the "users" and "tokens" tables. Use the 
+	// "ON users.id = tokens.user_id" clause indicating
+	// to join records where the user "id" value equals
+	// the token "user_id".
+	// "INNER JOIN" creates an interim table containing
+	// the joined data from both tables. The "WHERE"
+	// clause is used to filter this interim table to
+	// leave only rows where the token hash and token
+	// scope match specific placeholder parameter values,
+	// and the token expiry is after a specific time.
+	// Because the token hash is also a primary key,
+	// only one record will be left which contains the
+	// details of the user associated with the token
+	// hash.
+	query := `
+		SELECT * FROM users
+		INNER JOIN tokens
+		ON users.id = tokens.user_id
+		WHERE tokens.scope = ?
+		AND tokens.expiry > ?
+	`
+
+	// Create a slice ontaining the query arguments.
+	// Use the [:] operator to get a slice containing
+	// the token hash. Pass the current time as the
+	// value to check against the expiry.
+	args := []interface{}{
+		tokenScope,
+		time.Now(),
+	}
+
+	// Create a variable of type User
+	var user User
+	var token Token
+
+	// Create a context with a 3 second timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Execute the query, scanning the return values
+	// into the User struct. If no match found, return
+	// an ErrRecordNotFound error.
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.Password.hash,
+		&user.Activated,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+		&user.Version,
+		&token.Hash,
+		&token.userID,
+		&token.Expiry,
+		&token.Scope,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	// Check that token and token hash match.
+	if !CheckTokenHash(tokenPlaintext, token.Hash) {
+		return nil, errors.New("token is invalid or expired")
+	}
+	return &user, nil
+}
+
+// CheckTokenForHash function
+func CheckTokenHash(token string, hash []byte) bool {
+	log.Printf("Token: %s - Hash: %s", token, hash)
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(token))
+	return err == nil
 }
 
 // ValidateEmail creates validators for user email.

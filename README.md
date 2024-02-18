@@ -14,7 +14,7 @@ The command-line statements to use for database migration.
 
 To create a migration:
 
-     migrate create -seq -ext=.sql -dir=./migrations create_users_table
+     migrate create -seq -ext=.sql -dir=./migrations <migration name>
 
 To run a migration (use up or down):
 

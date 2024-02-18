@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"strings"
 	"time"
 )
@@ -65,4 +67,18 @@ func SliceToString(s []string) string {
 		return strings.Join(s, ",")
 	}
 	return ""
+}
+
+// GenerateRandomString generate a random string of 
+// a supplied length.
+func GenerateRandomString(length int) (string, error) {
+	// Initialize a byte slice of given length.
+	b := make([]byte, length)
+
+	// Read the random bytes into b
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(b), nil
 }
