@@ -130,7 +130,8 @@ func (app *application) routes() http.Handler {
 	)
 
 	// Return the router instance wrapped in middleware:
-	// 	1. Recover Panic middleware
+	// 	1. 	Recover Panic middleware
 	//	2.	Rate Limiter middleware
-	return app.recoverPanic(app.rateLimit(router))
+	//	3.	Authentication middleware
+	return app.recoverPanic(app.rateLimit(app.authenticate(router)))
 }

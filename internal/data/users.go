@@ -18,6 +18,11 @@ var (
 	ErrDuplicateEmail = errors.New("duplicate email")
 )
 
+// AnonymousUser declares a new variable representing
+// an inactivated user with no ID, name, email,
+// or password.
+var AnonymousUser = &User{}
+
 // User defines a struct to represent an individual
 // user. The json "-" struct tag is used to prevent the
 // Password and Version fields from appearing in any
@@ -48,6 +53,12 @@ type UserModel struct {
 type password struct {
 	plaintext *string
 	hash      []byte
+}
+
+// IsAnonymous checks if a User instance is
+// anonymous.
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
 }
 
 // Insert a new record in the database for the user.
