@@ -2,12 +2,13 @@ package data
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base32"
 	"time"
 
-	"github.com/robwestbrook/greenlight/internal"
 	"github.com/robwestbrook/greenlight/internal/validator"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // Define constants for the token scope.
@@ -46,28 +47,57 @@ func generateToken(
 		Scope: scope,
 	}
 
+	//******************
 	// Use the GenerateRandomString() function from the 
 	// internal package to return a random string.
-	randomString, err := internal.GenerateRandomString(24) 
-	if err != nil {
-		return nil, err
-	}
+	// HERE
+	// randomString, err := internal.GenerateRandomString(24) 
+	// if err != nil {
+	// 	return nil, err
+	// }
+	//*****************
 
+	// Initialize a zero-valued byte with a length of
+	// 16 bytes.
+	randomBytes := make([]byte, 16)
+
+	//******************
 	// Encode the byte slice to a base-32-encoded string
 	// and assign it to the token Plainfield field. This
 	// will be the token string sent to the user in the
 	// welcome email.
-	token.Plaintext = randomString
+	// token.Plaintext = randomString
 
-	hash, err :=bcrypt.GenerateFromPassword(
-		[]byte(token.Plaintext),
-		12,
-	)
+	// hash, err :=bcrypt.GenerateFromPassword(
+	// 	[]byte(token.Plaintext),
+	// 	12,
+	// )
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// token.Hash = hash
+	//*******************
+
+	// Use the Read() function from the crypto/rand
+	// package to fill the byte slice with random bytes
+	// from the operating system's CSPRNG.
+	_, err := rand.Read(randomBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	token.Hash = hash
+	// Encode the byte slice to a base-32 encoded string
+	// and assign it to the token Plaintext field. This
+	// will be the token string sent to the user in the
+	// welcome mail.
+	token.Plaintext = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(randomBytes)
+
+	// Generate a SHA-256 hash of the plain text token
+	// string. This will be the value stored in the hash
+	// field of the database table.
+	hash := sha256.Sum256([]byte(token.Plaintext))
+	token.Hash = hash[:]
 
 	return token, nil
 }
@@ -79,6 +109,11 @@ func ValidateTokenPlaintext(v *validator.Validator, tokenPlaintext string) {
 		tokenPlaintext != "",
 		"token",
 		"must be provided",
+	)
+	v.Check(
+		len(tokenPlaintext) == 26,
+		"token",
+		"must be 26 bytes long",
 	)
 }
 

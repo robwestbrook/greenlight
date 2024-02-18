@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"log"
@@ -98,7 +99,7 @@ func (m UserModel) Insert(user *User) error {
 	return nil
 }
 
-// GetByEmail() retrieves the User details from the
+// GetByEmail retrieves the User details from the
 // database based on the user's email address. Because
 // of the UNIQUE constaint on the email, the SQL query
 // will return only one record, or none at all, where
@@ -143,7 +144,7 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
-// Update() the details for a specific user. Check
+// Update the details for a specific user. Check
 // against the version field to prevent any race
 // conditions during the request cycle. Also check
 // for a violation of the "user_email_key" constraint
@@ -198,7 +199,7 @@ func (m UserModel) Update(user *User) error {
 	return nil
 }
 
-// Set() method calculates the bcrypt hash of a
+// Set method calculates the bcrypt hash of a
 // plaintext password, and stores both the hash and the
 // plaintext versions in the text.
 func (p *password) Set(plaintextPassword string) error {
@@ -216,7 +217,7 @@ func (p *password) Set(plaintextPassword string) error {
 	return nil
 }
 
-// Matches() method checks whether the provided
+// Matches method checks whether the provided
 // plaintext password matches the hashed password
 // stored in the struct. Return true if a match and
 // false otherwise.
@@ -242,6 +243,10 @@ func (m UserModel) GetForToken(
 	tokenPlaintext string,
 ) (*User, error) {
 
+	// Calculate the SHA-256 hash of the plaintext
+	// token provided by the client.
+	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
+
 	// Compose the SQL query.
 	// Use INNER JOIN to join together information from
 	// the "users" and "tokens" tables. Use the 
@@ -262,7 +267,8 @@ func (m UserModel) GetForToken(
 		SELECT * FROM users
 		INNER JOIN tokens
 		ON users.id = tokens.user_id
-		WHERE tokens.scope = ?
+		WHERE tokens.hash = ?
+		AND tokens.scope = ?
 		AND tokens.expiry > ?
 	`
 
@@ -271,6 +277,7 @@ func (m UserModel) GetForToken(
 	// the token hash. Pass the current time as the
 	// value to check against the expiry.
 	args := []interface{}{
+		tokenHash[:],
 		tokenScope,
 		time.Now(),
 	}
@@ -308,10 +315,12 @@ func (m UserModel) GetForToken(
 			return nil, err
 		}
 	}
+	//**************
 	// Check that token and token hash match.
-	if !CheckTokenHash(tokenPlaintext, token.Hash) {
-		return nil, errors.New("token is invalid or expired")
-	}
+	// if !CheckTokenHash(tokenPlaintext, token.Hash) {
+	// 	return nil, errors.New("token is invalid or expired")
+	// }
+	//**************
 	return &user, nil
 }
 
