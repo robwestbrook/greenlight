@@ -12,8 +12,11 @@ import (
 )
 
 // Define constants for the token scope.
+//	1.	Activation
+//	2.	Authentication
 const (
 	ScopeActivation = "activation"
+	ScopeAuthentication = "authenticaion"
 )
 
 // Token defines a struct to hold data for an individual
@@ -21,11 +24,11 @@ const (
 // versions of the token, associated userID, expiry
 // time, and scope.
 type Token struct {
-	Plaintext 	string
-	Hash 				[]byte
-	userID			int64
-	Expiry 			time.Time
-	Scope 			string
+	Plaintext 	string			`json:"token"`
+	Hash 				[]byte			`json:"-"`
+	userID			int64				`json:"-"`
+	Expiry 			time.Time		`json:"expiry"`
+	Scope 			string			`json:"-"`
 }
 
 // TokenModel defines the TokenModel type.

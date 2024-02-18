@@ -119,6 +119,16 @@ func (app *application) routes() http.Handler {
 		app.activateUserHandler,
 	)
 
+	// POST Authenticate a new user
+	// Pattern									|		Handler												|		Action
+	//----------------------------------------------------
+	// /v1/users/authentication	|	createAuthenticationTokenHandler| authenticate user
+	router.HandlerFunc(
+		http.MethodPost,
+		"/v1/tokens/authentication",
+		app.createAuthenticationTokenHandler,
+	)
+
 	// Return the router instance wrapped in middleware:
 	// 	1. Recover Panic middleware
 	//	2.	Rate Limiter middleware
