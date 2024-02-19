@@ -263,3 +263,44 @@ func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.Han
 		next.ServeHTTP(w, r)
 	})
 }
+
+// requirePermission middleware wraps the 
+// requireActivatedUser middleware, which in turn,
+// wraps the requireAuthenticated middleware. There
+// will be three checks when this middleware runs.
+// This middleware checks if an authenticated,
+// activated user, has a specific permission.
+// The first parameter is the permission code
+// required for the user to have.
+func (app *application) requirePermission(
+	code string, 
+	next http.HandlerFunc,
+	) http.HandlerFunc {
+		// Create a function to make this check
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			// Retrieve the user from the request context
+			user := app.contextGetUser(r)
+
+			// Get the slice of permissions for the user
+			permissions, err := app.models.Permissions.GetAllForUser(user.ID)
+			if err != nil {
+				app.serverErrorResponse(w, r, err)
+				return
+			}
+
+			// Check of the slice includes the required 
+			// permission. If not, then return a 403 Forbidden
+			// status code.
+			if !permissions.Include(code) {
+				app.notPermittedResponse(w, r)
+				return
+			}
+
+			// If the user has permission, call the next handler.
+			next.ServeHTTP(w, r)
+		}
+
+		// Wrap this with the requireActivatedUser()
+		// middleware before returning.
+		return app.requireActivatedUser(fn)
+}

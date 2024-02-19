@@ -17,6 +17,7 @@ var (
 // Models is a struct which wraps all database models.
 type Models struct {
 	Events			EventModel
+	Permissions	PermissionModel
 	Tokens			TokenModel
 	Users				UserModel
 }
@@ -26,6 +27,7 @@ type Models struct {
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Events: EventModel{DB: db},
+		Permissions: PermissionModel{DB: db},
 		Tokens: TokenModel{DB: db},
 		Users: UserModel{DB: db},
 	}

@@ -50,22 +50,22 @@ func (app *application) routes() http.Handler {
 	//----------------------------------------------------
 	// /v1/events				|	listEventsHandler		| retrieve list
 	//									|											| of events
-	// Use the requireActivatedUser() middleware
+	// Use the requirePermission() middleware
 	router.HandlerFunc(
 		http.MethodGet,
 		"/v1/events",
-		app.requireActivatedUser(app.listEventsHandler),
+		app.requirePermission("events:read", app.listEventsHandler),
 	)
 	// POST create Event route
 	// Pattern					|		Handler						|		Action
 	//----------------------------------------------------
 	// /v1/events				|	createEventHandler	| create new
 	//									|											| event
-	// Use the requireActivatedUser() middleware
+	// Use the requirePermission() middleware
 	router.HandlerFunc(
 		http.MethodPost,
 		"/v1/events",
-		app.requireActivatedUser(app.createEventHandler),
+		app.requirePermission("events:write", app.createEventHandler),
 	)
 
 	// GET get Event by ID route
@@ -73,11 +73,11 @@ func (app *application) routes() http.Handler {
 	//----------------------------------------------------
 	// /v1/events	/:id	|	showEventHandler		| show event
 	//									|											| details
-	// Use the requireActivatedUser() middleware
+	// Use the requirePermission() middleware
 	router.HandlerFunc(
 		http.MethodGet,
 		"/v1/events/:id",
-		app.requireActivatedUser(app.showEventHandler),
+		app.requirePermission("events:read", app.showEventHandler),
 	)
 
 	// PATCH update Event by ID route
@@ -85,11 +85,11 @@ func (app *application) routes() http.Handler {
 	//----------------------------------------------------
 	// /v1/events	/:id	|	updateEventHandler	| update event
 	//									|											| details
-	// Use the requireActivatedUser() middleware
+	// Use the requirePermission() middleware
 	router.HandlerFunc(
 		http.MethodPatch,
 		"/v1/events/:id",
-		app.requireActivatedUser(app.updateEventHandler),
+		app.requirePermission("events:write", app.updateEventHandler),
 	)
 
 	// DELETE delete Event by ID
@@ -97,11 +97,11 @@ func (app *application) routes() http.Handler {
 	//----------------------------------------------------
 	// /v1/events/:id	|	deleteEventHandler	| delete event
 	//									|											| by ID
-	// Use the requireActivatedUser() middleware
+	// Use the requirePermission() middleware
 	router.HandlerFunc(
 		http.MethodDelete,
 		"/v1/events/:id",
-		app.requireActivatedUser(app.deleteEventHandler),
+		app.requirePermission("events:write", app.deleteEventHandler),
 	)
 
 	// POST Register new user
