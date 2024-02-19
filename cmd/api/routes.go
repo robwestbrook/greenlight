@@ -50,20 +50,22 @@ func (app *application) routes() http.Handler {
 	//----------------------------------------------------
 	// /v1/events				|	listEventsHandler		| retrieve list
 	//									|											| of events
+	// Use the requireActivatedUser() middleware
 	router.HandlerFunc(
 		http.MethodGet,
 		"/v1/events",
-		app.listEventsHandler,
+		app.requireActivatedUser(app.listEventsHandler),
 	)
 	// POST create Event route
 	// Pattern					|		Handler						|		Action
 	//----------------------------------------------------
 	// /v1/events				|	createEventHandler	| create new
 	//									|											| event
+	// Use the requireActivatedUser() middleware
 	router.HandlerFunc(
 		http.MethodPost,
 		"/v1/events",
-		app.createEventHandler,
+		app.requireActivatedUser(app.createEventHandler),
 	)
 
 	// GET get Event by ID route
@@ -71,10 +73,11 @@ func (app *application) routes() http.Handler {
 	//----------------------------------------------------
 	// /v1/events	/:id	|	showEventHandler		| show event
 	//									|											| details
+	// Use the requireActivatedUser() middleware
 	router.HandlerFunc(
 		http.MethodGet,
 		"/v1/events/:id",
-		app.showEventHandler,
+		app.requireActivatedUser(app.showEventHandler),
 	)
 
 	// PATCH update Event by ID route
@@ -82,10 +85,11 @@ func (app *application) routes() http.Handler {
 	//----------------------------------------------------
 	// /v1/events	/:id	|	updateEventHandler	| update event
 	//									|											| details
+	// Use the requireActivatedUser() middleware
 	router.HandlerFunc(
 		http.MethodPatch,
 		"/v1/events/:id",
-		app.updateEventHandler,
+		app.requireActivatedUser(app.updateEventHandler),
 	)
 
 	// DELETE delete Event by ID
@@ -93,10 +97,11 @@ func (app *application) routes() http.Handler {
 	//----------------------------------------------------
 	// /v1/events/:id	|	deleteEventHandler	| delete event
 	//									|											| by ID
+	// Use the requireActivatedUser() middleware
 	router.HandlerFunc(
 		http.MethodDelete,
 		"/v1/events/:id",
-		app.deleteEventHandler,
+		app.requireActivatedUser(app.deleteEventHandler),
 	)
 
 	// POST Register new user
