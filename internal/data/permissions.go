@@ -76,3 +76,50 @@ func (m PermissionModel) GetAllForUser(userID int64) (Permissions, error) {
 
 	return permissions, nil
 }
+
+// AddForUser adds provided codes for a specific user.
+// TODO: process more than one code at a time.
+func (m PermissionModel) AddForUser(
+	userID int64,
+	code string,
+) error {
+	
+	// Build SQL query to get permissions ID from code
+	query := `
+		SELECT * FROM permissions
+		WHERE code = ?
+	`
+
+	// Create a context with a 3 second timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Execute query
+	row := m.DB.QueryRowContext(ctx, query, code)
+	
+
+	// Initialize variables to hold query results
+	var codeID int
+	var codeString string
+
+	// Scan the row results into the variables
+	err := row.Scan(&codeID, &codeString)
+	if err != nil {
+		return err
+	}
+
+	// Build SQL query to insert userID and codeID
+	// into users_permissions
+	query = `
+		INSERT INTO users_permissions (user_id, permission_id)
+		VALUES (?, ?)
+	`
+
+	// Create a context with a 3 second timeout.
+	ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Execute query
+	_, err = m.DB.ExecContext(ctx, query, userID, codeID)
+	return err
+}

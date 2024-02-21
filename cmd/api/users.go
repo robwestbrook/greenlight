@@ -72,6 +72,16 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Add the "events:read" permission for new user
+	err = app.models.Permissions.AddForUser(
+		user.ID,
+		"events:read",
+	)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
 	// After the user record has been created in the
 	// database, generate a new activation token for 
 	// the user.
