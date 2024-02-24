@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	"expvar"
 	"flag"
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -163,6 +165,29 @@ func main() {
 
 	// Log message db is open
 	logger.PrintInfo("database connection pool established", nil)
+
+	// Set a new "version" variable in the expvar handler
+	// containing the application version number. This
+	// will be reflected in the "/v1/metrics" endpoint.
+	expvar.NewString("version").Set(version)
+
+	// Publish the number of active goroutines. This
+	// will be reflected in the "/v1/metrics" endpoint.
+	expvar.Publish("goroutines", expvar.Func(func() interface{} {
+		return runtime.NumGoroutine()
+	}))
+
+	// Publish the database connection pools stats. This
+	// will be reflected in the "/v1/metrics" endpoint.
+	expvar.Publish("database", expvar.Func(func() interface{} {
+		return db.Stats()
+	}))
+
+	// Publish the current Unix timestamp. This
+	// will be reflected in the "/v1/metrics" endpoint.
+	expvar.Publish("timestamp", expvar.Func(func() interface{} {
+		return time.Now().Unix()
+	}))
 
 	// Declare an instance of the application struct.
 	// Contains:

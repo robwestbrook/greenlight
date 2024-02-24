@@ -5,6 +5,7 @@ package main
 */
 
 import (
+	"expvar"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -134,10 +135,26 @@ func (app *application) routes() http.Handler {
 		app.createAuthenticationTokenHandler,
 	)
 
+	// GET Debug information for the app
+	// Pattern			|		Handler				|		Action
+	//----------------------------------------------------
+	// //debug/vars	|	expvar.Handler	| provide app debug info
+	router.Handler(http.MethodGet, "/v1/metrics", expvar.Handler())
+
+
 	// Return the router instance wrapped in middleware:
-	// 	1. 	Recover Panic middleware
-	//	2.	Enable CORS middleware
-	//	3.	Rate Limiter middleware
-	//	4.	Authentication middleware
-	return app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router))))
+	//	1.	App Metrics middleware
+	// 	2. 	Recover Panic middleware
+	//	3.	Enable CORS middleware
+	//	4.	Rate Limiter middleware
+	//	5.	Authentication middleware
+	return app.metrics(
+		app.recoverPanic(
+			app.enableCORS(
+				app.rateLimit(
+					app.authenticate(router),
+				),
+			),
+		),
+	)
 }
