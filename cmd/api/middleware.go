@@ -304,3 +304,56 @@ func (app *application) requirePermission(
 		// middleware before returning.
 		return app.requireActivatedUser(fn)
 }
+
+// enableCORS method
+func (app *application) enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Add the "Vary: Origin" header
+		w.Header().Add("Vary", "Origin")
+
+		// Add the "Vary: Access-Control-Request-Method"
+		// header.
+		w.Header().Add("Vary", "Access-Control-Request-Method")
+
+		// Get the value of the request's Origin header
+		origin := r.Header.Get("Origin")
+
+		// If there is an Origin request header present and
+		// at least one trusted origin is configured.
+		if origin != "" && len(app.config.cors.trustedOrigins) != 0 {
+			// Loop through the list of trusted origins,
+			// checking to see if the request origin exactly
+			// matches on of them.
+			for i := range app.config.cors.trustedOrigins {
+				if origin == app.config.cors.trustedOrigins[i] {
+					// If there is a match, set
+					// "Access-Control-Allow-Origin" response
+					// header with the request origin as the value.
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+					// Check if the request has the HTTP method OPTIONS
+					// and contains "Access-Control-Request-Method"
+					// header. If it is, treat as a preflight request.
+					if r.Method == http.MethodOptions && 
+						r.Header.Get("Access-Control-Request-Method") != "" {
+							// Set necessary preflight response headers.
+							w.Header().Set(
+								"Access-Control-Allow-Methods",
+								"OPTIONS, PUT, PATCH, DELETE",
+							)
+							w.Header().Set(
+								"Access-Control-Allow-Headers",
+								"Authorization, Content-Type",
+							)
+							// Write the headers along with a 200 OK
+							// status and return from middleware with
+							// no further action.
+							w.WriteHeader(http.StatusOK)
+							return
+					}
+				}
+			}
+		}
+		// Call the next handler in the chain.
+		next.ServeHTTP(w, r)
+	})
+}

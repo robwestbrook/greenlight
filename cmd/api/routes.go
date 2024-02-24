@@ -136,7 +136,8 @@ func (app *application) routes() http.Handler {
 
 	// Return the router instance wrapped in middleware:
 	// 	1. 	Recover Panic middleware
-	//	2.	Rate Limiter middleware
-	//	3.	Authentication middleware
-	return app.recoverPanic(app.rateLimit(app.authenticate(router)))
+	//	2.	Enable CORS middleware
+	//	3.	Rate Limiter middleware
+	//	4.	Authentication middleware
+	return app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router))))
 }

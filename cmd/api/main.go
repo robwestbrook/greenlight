@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -42,6 +43,8 @@ const version = "1.0.0"
 //		c.	username - username on host
 //		d.	password - password on host
 //		e.	sender - sender info used on host
+//	6. CORS - CORS config settings
+//		a.	trustedOrigins - slice containing trusted origins
 type config struct {
 	port int
 	env  string
@@ -62,6 +65,9 @@ type config struct {
 		username	string
 		password	string
 		sender		string
+	}
+	cors struct {
+		trustedOrigins []string
 	}
 }
 
@@ -112,9 +118,10 @@ func main() {
 	//	9.	Rate limiter enabled (default: true)
 	// 10.	SMTP host (default: .env host)
 	// 11.	SMTP port (default: .env port)
-	// 11.	SMTP username (default: .env username)
-	// 11.	SMTP password (default: .env password)
-	// 11.	SMTP sender (default: .env sender)
+	// 12.	SMTP username (default: .env username)
+	// 13.	SMTP password (default: .env password)
+	// 14.	SMTP sender (default: .env sender)
+	// 15.	CORS trusted origins (default: empty []string slice)
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
 	flag.StringVar(&cfg.db.dsn, "db-dsn", "greenlight.db", "SQLite database name")
@@ -129,6 +136,10 @@ func main() {
 	flag.StringVar(&cfg.smtp.username, "smtp-username", smtpUsername, "SMTP username")
 	flag.StringVar(&cfg.smtp.password, "smtp-password", smtpPassword, "SMTP password")
 	flag.StringVar(&cfg.smtp.sender, "smtp-sender", smtpSender, "SMTP sender")
+	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(val string) error {
+		cfg.cors.trustedOrigins = strings.Fields(val)
+		return nil
+	})
 
 	flag.Parse()
 
