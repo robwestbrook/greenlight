@@ -29,4 +29,5 @@ Git commit hashes for versioning. To add a tag using Git:
     git tag v<version-number>
 
 The version output will be in this format:
+    
     {tag}-{number of additional commits}-g{abbreviated commit hash}
