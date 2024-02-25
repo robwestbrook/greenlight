@@ -5,6 +5,11 @@ ifneq (,$(wildcard ./.env))
 	export
 endif
 
+#======================================================#
+# HELPERS
+#
+#======================================================#
+
 ## help: print this help message
 ## .PHONY helps resolve any file naming conflicts
 .PHONY: help
@@ -16,6 +21,10 @@ help:
 .PHONY: confirm
 confirm:
 	@echo -n 'Are you sure [y/N] ' && read ans && [ $${ans:-N} = y ]
+
+#======================================================#
+# DEVELOPMENT
+#======================================================#
 
 ## run/api: run cmd/api application
 .PHONY: run/api
@@ -33,3 +42,52 @@ db/migrations/new:
 db/migrations/up: confirm
 	@echo 'Running up migrations...'
 	migrate -path=./migrations -database=${DB_DSN} -verbose up
+
+#======================================================#
+# QUALITY CONTROL
+#
+#======================================================#
+
+## audit: tidy dependencies and format, vet and test all code
+.PHONY: audit
+audit: vendor
+	@echo 'Formatting code...'
+	go fmt ./...
+	@echo 'Vetting code...'
+	go vet ./...
+	staticcheck ./...
+
+## test: run all application tests
+.PHONY: test
+test:
+	@echo 'Running tests...'
+	go test -race -vet=off ./...
+
+## vendor: tidy and vendor dependencies
+.PHONY: vendor
+vendor:
+	@echo 'Tidying and verifying module dependencies'
+	go mod tidy
+	go mod verify
+	@echo 'Vendoring dependencies...'
+	go mod vendor
+
+#======================================================#
+# BUILD
+#
+#======================================================#
+
+## build/api: build the cmd/api application
+# Using the linker flag "-ldflags="-s"" instructs the
+# Go linker to strip the DWARF debugging info and 
+# symbol table from the binary that is built. This
+# reduces the binary size by around 25%.
+# The first "go build" builds a binary for the local
+# machine.
+# The second "go build" builds a binary for deploying
+# to a Ubuntu Linux server.
+.PHONY: build/api
+build/api:
+	@echo 'Building cmd/api...'
+	go build -ldflags='-s' -o=./bin/api ./cmd/api
+	GOOS=linux GOARCH=amd64 go build -ldflags='-s' -o=./bin/linux_amd64/api ./cmd/api

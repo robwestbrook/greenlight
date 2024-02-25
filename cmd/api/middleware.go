@@ -4,7 +4,6 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/felixge/httpsnoop"
 	"github.com/robwestbrook/greenlight/internal/data"
 	"github.com/robwestbrook/greenlight/internal/validator"
+	"github.com/tomasen/realip"
 	"golang.org/x/time/rate"
 )
 
@@ -93,12 +93,9 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only rate limit if it is enabled
 		if app.config.limiter.enabled {
-			// Extract the client's IP address from the request.
-			ip, _, err := net.SplitHostPort(r.RemoteAddr)
-			if err != nil {
-				app.serverErrorResponse(w, r, err)
-				return
-			}
+			// Use the realip.FromRequest() function to get
+			// the client's real IP address.
+			ip := realip.FromRequest(r)
 
 			// Lock the mutex to prevent this code from being
 			// executed concurrently.
@@ -185,11 +182,11 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 		// Extract the actual authentication token.
 		token := headerParts[1]
 
-		// Validate the token to make use it is in a 
+		// Validate the token to make use it is in a
 		//vsensible format.
 		v := validator.New()
 
-		// If the token is not valid, use the 
+		// If the token is not valid, use the
 		// invalidAuthenticationTokenResponse() helper
 		// to send a response.
 		if data.ValidateTokenPlaintext(v, token); !v.Valid() {
@@ -220,7 +217,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 }
 
 // requireActivatedUser checks if a user is
-// authenticated and activated. It calls the 
+// authenticated and activated. It calls the
 // requireAuthenticatedUser before being executed
 // itself.
 func (app *application) requireActivatedUser(next http.HandlerFunc) http.HandlerFunc {
@@ -261,13 +258,13 @@ func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.Han
 			return
 		}
 
-		// If user is not anonymous, continue the 
+		// If user is not anonymous, continue the
 		// middleware chain.
 		next.ServeHTTP(w, r)
 	})
 }
 
-// requirePermission middleware wraps the 
+// requirePermission middleware wraps the
 // requireActivatedUser middleware, which in turn,
 // wraps the requireAuthenticated middleware. There
 // will be three checks when this middleware runs.
@@ -276,36 +273,36 @@ func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.Han
 // The first parameter is the permission code
 // required for the user to have.
 func (app *application) requirePermission(
-	code string, 
+	code string,
 	next http.HandlerFunc,
-	) http.HandlerFunc {
-		// Create a function to make this check
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			// Retrieve the user from the request context
-			user := app.contextGetUser(r)
+) http.HandlerFunc {
+	// Create a function to make this check
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		// Retrieve the user from the request context
+		user := app.contextGetUser(r)
 
-			// Get the slice of permissions for the user
-			permissions, err := app.models.Permissions.GetAllForUser(user.ID)
-			if err != nil {
-				app.serverErrorResponse(w, r, err)
-				return
-			}
-
-			// Check of the slice includes the required 
-			// permission. If not, then return a 403 Forbidden
-			// status code.
-			if !permissions.Include(code) {
-				app.notPermittedResponse(w, r)
-				return
-			}
-
-			// If the user has permission, call the next handler.
-			next.ServeHTTP(w, r)
+		// Get the slice of permissions for the user
+		permissions, err := app.models.Permissions.GetAllForUser(user.ID)
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
 		}
 
-		// Wrap this with the requireActivatedUser()
-		// middleware before returning.
-		return app.requireActivatedUser(fn)
+		// Check of the slice includes the required
+		// permission. If not, then return a 403 Forbidden
+		// status code.
+		if !permissions.Include(code) {
+			app.notPermittedResponse(w, r)
+			return
+		}
+
+		// If the user has permission, call the next handler.
+		next.ServeHTTP(w, r)
+	}
+
+	// Wrap this with the requireActivatedUser()
+	// middleware before returning.
+	return app.requireActivatedUser(fn)
 }
 
 // enableCORS method
@@ -336,22 +333,22 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 					// Check if the request has the HTTP method OPTIONS
 					// and contains "Access-Control-Request-Method"
 					// header. If it is, treat as a preflight request.
-					if r.Method == http.MethodOptions && 
+					if r.Method == http.MethodOptions &&
 						r.Header.Get("Access-Control-Request-Method") != "" {
-							// Set necessary preflight response headers.
-							w.Header().Set(
-								"Access-Control-Allow-Methods",
-								"OPTIONS, PUT, PATCH, DELETE",
-							)
-							w.Header().Set(
-								"Access-Control-Allow-Headers",
-								"Authorization, Content-Type",
-							)
-							// Write the headers along with a 200 OK
-							// status and return from middleware with
-							// no further action.
-							w.WriteHeader(http.StatusOK)
-							return
+						// Set necessary preflight response headers.
+						w.Header().Set(
+							"Access-Control-Allow-Methods",
+							"OPTIONS, PUT, PATCH, DELETE",
+						)
+						w.Header().Set(
+							"Access-Control-Allow-Headers",
+							"Authorization, Content-Type",
+						)
+						// Write the headers along with a 200 OK
+						// status and return from middleware with
+						// no further action.
+						w.WriteHeader(http.StatusOK)
+						return
 					}
 				}
 			}
@@ -398,7 +395,7 @@ func (app *application) metrics(next http.Handler) http.Handler {
 		// Use the Add() method to increment the count for
 		// the given status code by one. The expvar map
 		// is string-keyed, so use the strcov.Iota()
-		// function to convert status code from integer 
+		// function to convert status code from integer
 		// to string.
 		totalResponsesSentByStatus.Add(strconv.Itoa(metrics.Code), 1)
 	})

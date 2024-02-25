@@ -14,9 +14,9 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	// Create an anonymous struct to hold the expected
 	// data from the request body.
 	var input struct {
-		Name			string	`json:"name"`
-		Email			string	`json:"email"`
-		Password	string	`json:"password"`
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	// Parse the request body into the anonymous struct
@@ -29,9 +29,9 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	// Copy the data from the request body into a new
 	// User struct. Set the activated field to false.
 	user := &data.User{
-		Name:				input.Name,
-		Email: 			input.Email,
-		Activated: 	false,
+		Name:      input.Name,
+		Email:     input.Email,
+		Activated: false,
 	}
 
 	// Use the Password.Set() method to generate and
@@ -56,10 +56,10 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	err = app.models.Users.Insert(user)
 	if err != nil {
 		switch {
-			// If an ErrDuplicateEmail error is recieved,
-			// use the v.AddError() method to manually add a
-			// message to the validator instance, then call
-			// our failedValidationResponse() helper.
+		// If an ErrDuplicateEmail error is recieved,
+		// use the v.AddError() method to manually add a
+		// message to the validator instance, then call
+		// our failedValidationResponse() helper.
 		case errors.Is(err, data.ErrDuplicateEmail):
 			v.AddError(
 				"email",
@@ -83,7 +83,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	// After the user record has been created in the
-	// database, generate a new activation token for 
+	// database, generate a new activation token for
 	// the user.
 	token, err := app.models.Tokens.New(
 		user.ID,
@@ -104,7 +104,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 		data := map[string]interface{}{
 			"activationToken": token.Plaintext,
-			"userID": user.ID,
+			"userID":          user.ID,
 		}
 
 		err = app.mailer.Send(user.Email, "user_welcome.tmpl", data)
@@ -112,7 +112,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 			app.logger.PrintError(err, nil)
 		}
 	})
-	
+
 	// Send client a 202 Accepted status code. This status
 	// code indicates the request has been accepted for
 	// processing, but the processing has not been
@@ -135,9 +135,9 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 	// Create an input struct to hold the plaintext
 	// token.
 	var input struct {
-		TokenPlaintext	string	`json:"token"`
+		TokenPlaintext string `json:"token"`
 	}
-	
+
 	// Parse the plaintext activation token from the
 	// request body.
 	err := app.readJSON(w, r, &input)
@@ -161,7 +161,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		data.ScopeActivation,
 		input.TokenPlaintext,
 	)
-	
+
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -173,7 +173,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Update the user's activation status and 
+	// Update the user's activation status and
 	// updated date and time.
 	user.Activated = true
 	user.UpdatedAt = time.Now()

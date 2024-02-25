@@ -27,7 +27,7 @@ func (app *application) contextSetUser(r *http.Request, user *data.User) *http.R
 // contextGetUser method retrieves the User struct from
 // the request context. Only used when a User struct
 // value is expected in the context. If it does not, it
-// will firmly be an "unexpected" error. 
+// will firmly be an "unexpected" error.
 func (app *application) contextGetUser(r *http.Request) *data.User {
 	user, ok := r.Context().Value(userContextKey).(*data.User)
 	if !ok {

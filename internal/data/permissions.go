@@ -83,7 +83,7 @@ func (m PermissionModel) AddForUser(
 	userID int64,
 	code string,
 ) error {
-	
+
 	// Build SQL query to get permissions ID from code
 	query := `
 		SELECT * FROM permissions
@@ -96,7 +96,6 @@ func (m PermissionModel) AddForUser(
 
 	// Execute query
 	row := m.DB.QueryRowContext(ctx, query, code)
-	
 
 	// Initialize variables to hold query results
 	var codeID int

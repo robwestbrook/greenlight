@@ -12,10 +12,10 @@ import (
 )
 
 // Define constants for the token scope.
-//	1.	Activation
-//	2.	Authentication
+//  1. Activation
+//  2. Authentication
 const (
-	ScopeActivation = "activation"
+	ScopeActivation     = "activation"
 	ScopeAuthentication = "authenticaion"
 )
 
@@ -24,11 +24,11 @@ const (
 // versions of the token, associated userID, expiry
 // time, and scope.
 type Token struct {
-	Plaintext 	string			`json:"token"`
-	Hash 				[]byte			`json:"-"`
-	userID			int64				`json:"-"`
-	Expiry 			time.Time		`json:"expiry"`
-	Scope 			string			`json:"-"`
+	Plaintext string    `json:"token"`
+	Hash      []byte    `json:"-"`
+	userID    int64     `json:"-"`
+	Expiry    time.Time `json:"expiry"`
+	Scope     string    `json:"-"`
 }
 
 // TokenModel defines the TokenModel type.
@@ -47,14 +47,14 @@ func generateToken(
 	token := &Token{
 		userID: userID,
 		Expiry: time.Now().Add(ttl),
-		Scope: scope,
+		Scope:  scope,
 	}
 
 	//******************
-	// Use the GenerateRandomString() function from the 
+	// Use the GenerateRandomString() function from the
 	// internal package to return a random string.
 	// HERE
-	// randomString, err := internal.GenerateRandomString(24) 
+	// randomString, err := internal.GenerateRandomString(24)
 	// if err != nil {
 	// 	return nil, err
 	// }

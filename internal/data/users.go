@@ -38,7 +38,7 @@ type User struct {
 	Version   int       `json:"-"`
 }
 
-// UserModel creates a struct that wraps the 
+// UserModel creates a struct that wraps the
 // connection pool.
 type UserModel struct {
 	DB *sql.DB
@@ -70,7 +70,7 @@ func (m UserModel) Insert(user *User) error {
 		INSERT INTO users (name, email, password_hash, activated, created_at, updated_at, version)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 		RETURNING id, created_at, updated_at, version
-	`;
+	`
 
 	// Create an args variable to hold the client input.
 	args := []interface{}{
@@ -101,10 +101,10 @@ func (m UserModel) Insert(user *User) error {
 	)
 	if err != nil {
 		switch {
-			case err.Error() == `UNIQUE constraint failed: users.email`:
-				return ErrDuplicateEmail
-			default:
-				return err
+		case err.Error() == `UNIQUE constraint failed: users.email`:
+			return ErrDuplicateEmail
+		default:
+			return err
 		}
 	}
 	return nil
@@ -260,7 +260,7 @@ func (m UserModel) GetForToken(
 
 	// Compose the SQL query.
 	// Use INNER JOIN to join together information from
-	// the "users" and "tokens" tables. Use the 
+	// the "users" and "tokens" tables. Use the
 	// "ON users.id = tokens.user_id" clause indicating
 	// to join records where the user "id" value equals
 	// the token "user_id".
@@ -400,7 +400,7 @@ func ValidateUser(v *validator.Validator, user *User) {
 
 	// If the password hash is ever nil, it will be due
 	// to a logic error in the codebase. It is a useful
-	// sanity check to include, but it is not a problem 
+	// sanity check to include, but it is not a problem
 	// with the data peovided by the client. Rather than
 	// adding an error to the validation map, raise a
 	// panic instead.

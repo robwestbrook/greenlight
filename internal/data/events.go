@@ -26,30 +26,30 @@ import (
 // 9.		UpdatedAt: Timestamp when event was updated
 // 10.	Version: Version starts at 1 and incremented on each update
 type Event struct {
-	ID					int64				`json:"id"`
-	Title				string			`json:"title"`
-	Description	string			`json:"description,omitempty"`
-	Tags				[]string		`json:"tags,omitempty"`
-	AllDay			bool				`json:"all_day"`
-	Start				time.Time		`json:"start"`
-	End					time.Time	 	`json:"end"`
-	CreatedAt		time.Time		`json:"created_at"`
-	UpdatedAt		time.Time		`json:"updated_at"`
-	Version			int32				`json:"version"`
+	ID          int64     `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description,omitempty"`
+	Tags        []string  `json:"tags,omitempty"`
+	AllDay      bool      `json:"all_day"`
+	Start       time.Time `json:"start"`
+	End         time.Time `json:"end"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Version     int32     `json:"version"`
 }
 
 // EventModel struct wraps an sql.DB connection pool.
 type EventModel struct {
-	DB 	*sql.DB
+	DB *sql.DB
 }
 
 // Metadata struct for holding pagination data.
 type Metadata struct {
-	CurrentPage		int		`json:"current_page,omitempty"`
-	PageSize			int		`json:"page_size,omitempty"`
-	FirstPage			int		`json:"first_page,omitempty"`
-	LastPage			int		`json:"last_page,omitempty"`
-	TotalRecords	int		`json:"total_records,omitempty"`
+	CurrentPage  int `json:"current_page,omitempty"`
+	PageSize     int `json:"page_size,omitempty"`
+	FirstPage    int `json:"first_page,omitempty"`
+	LastPage     int `json:"last_page,omitempty"`
+	TotalRecords int `json:"total_records,omitempty"`
 }
 
 // ValidateEvent runs the validator to validate
@@ -75,15 +75,15 @@ func (e EventModel) Insert(event *Event) error {
 	// Create an arguments slice containing the values
 	// for the placeholder parameters.
 	args := []interface{}{
-		event.Title,												// title - string
-		event.Description,									// description - string
-		internal.SliceToString(event.Tags),	// tags - string
-		event.AllDay,												// all_day - boolean
-		event.Start,												// start - convert from Go time to string
-		event.End,													// end - convert from Go time to string
-		time.Now(), 												// created_at - convert from Go time to string
-		time.Now(),													// updated_at - convert from Go time to string
-		1,																	// version - starts with 1
+		event.Title,                        // title - string
+		event.Description,                  // description - string
+		internal.SliceToString(event.Tags), // tags - string
+		event.AllDay,                       // all_day - boolean
+		event.Start,                        // start - convert from Go time to string
+		event.End,                          // end - convert from Go time to string
+		time.Now(),                         // created_at - convert from Go time to string
+		time.Now(),                         // updated_at - convert from Go time to string
+		1,                                  // version - starts with 1
 	}
 
 	// Create a context with a 3 second timeout and defer.
@@ -91,7 +91,7 @@ func (e EventModel) Insert(event *Event) error {
 	defer cancel()
 
 	// Use QueryRowContext() method to execute the SQL query
-	// passing in the context, query, and args slice. 
+	// passing in the context, query, and args slice.
 	// Scan in the returning values to the event struct.
 	return e.DB.QueryRowContext(ctx, query, args...).Scan(&event.ID, &event.CreatedAt, &event.UpdatedAt, &event.Version)
 }
@@ -128,9 +128,9 @@ func (e EventModel) Get(id int64) (*Event, error) {
 	// before the Get() method returns.
 	defer cancel()
 
-	// Execute the query with the QueryRowContext() method, 
-	// passing the  context with deadline and ID. 
-	// Scan the response data into the fields of the 
+	// Execute the query with the QueryRowContext() method,
+	// passing the  context with deadline and ID.
+	// Scan the response data into the fields of the
 	// Event struct and tag variable.
 	err := e.DB.QueryRowContext(ctx, query, id).Scan(
 		&event.ID,
@@ -164,7 +164,7 @@ func (e EventModel) Get(id int64) (*Event, error) {
 	return &event, nil
 }
 
-// Update updates a specific record by ID in 
+// Update updates a specific record by ID in
 // the events table.
 func (e EventModel) Update(event *Event) error {
 	// Define the SQL query to update event
@@ -201,10 +201,10 @@ func (e EventModel) Update(event *Event) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	// Use QueryRowContext() method to execute query. 
-	// Pass the context, query, and args slice as paramters 
-	// and scan the new version into the event struct. 
-	// If no row is found, the  event has been deleted or 
+	// Use QueryRowContext() method to execute query.
+	// Pass the context, query, and args slice as paramters
+	// and scan the new version into the event struct.
+	// If no row is found, the  event has been deleted or
 	// the version has changed, indicating a race condition.
 	err := e.DB.QueryRowContext(ctx, query, args...).Scan(&event.Version)
 	if err != nil {
@@ -218,7 +218,7 @@ func (e EventModel) Update(event *Event) error {
 	return nil
 }
 
-// Delete deletes a specific record by ID from 
+// Delete deletes a specific record by ID from
 // the events table.
 func (e EventModel) Delete(id int64) error {
 	// Return an ErrRecordNotFound error if event ID
@@ -265,8 +265,8 @@ func (e EventModel) Delete(id int64) error {
 func (e EventModel) GetAll(
 	title string,
 	description string,
-	tags	[]string,
-	filters 	Filters,
+	tags []string,
+	filters Filters,
 ) ([]*Event, Metadata, error) {
 	// Build the SQL query to get all event records
 	query := fmt.Sprintf(`
@@ -281,8 +281,8 @@ func (e EventModel) GetAll(
 		ORDER BY %s %s, id ASC
 		LIMIT ? OFFSET ?
 	`,
-	filters.sortColumn(), 
-	filters.sortDirection(),
+		filters.sortColumn(),
+		filters.sortDirection(),
 	)
 
 	// Create a context with 3 second timeout
@@ -298,8 +298,8 @@ func (e EventModel) GetAll(
 	//	5.	limit: the limit of records from filter
 	//	6.	offset: the offset from filter
 	args := []interface{}{
-		title, 
-		title, 
+		title,
+		title,
 		description,
 		internal.SliceToString(tags),
 		filters.limit(),
@@ -308,7 +308,7 @@ func (e EventModel) GetAll(
 
 	// Use QueryContext() method to execute the query.
 	// An sql.Rows result set is returned containing
-	// the result. 
+	// the result.
 	rows, err := e.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, Metadata{}, err
@@ -330,7 +330,7 @@ func (e EventModel) GetAll(
 		// each event
 		var event Event
 
-		// Initialize an empty Tag slice to hold 
+		// Initialize an empty Tag slice to hold
 		// event tags
 		var tags string
 
@@ -349,7 +349,7 @@ func (e EventModel) GetAll(
 			&event.Version,
 		)
 
-		// Convert tags to slice and add to event.Tags 
+		// Convert tags to slice and add to event.Tags
 		// struct
 		event.Tags = strings.Split(tags, ",")
 
@@ -381,9 +381,10 @@ func (e EventModel) GetAll(
 
 // calculateMetadata() function calculates the
 // appropriate pagination metadata values given:
-//	1.	Total number of records
-//	2.	Current page
-//	3.	Page size
+//  1. Total number of records
+//  2. Current page
+//  3. Page size
+//
 // The last page is calculated using the math.Ceil()
 // function, which rounds up.
 func calculateMetadata(
@@ -395,10 +396,10 @@ func calculateMetadata(
 	}
 
 	return Metadata{
-		CurrentPage: page,
-		PageSize: pageSize,
-		FirstPage: 1,
-		LastPage: int(math.Ceil(float64(totalRecords) / float64(pageSize))),
+		CurrentPage:  page,
+		PageSize:     pageSize,
+		FirstPage:    1,
+		LastPage:     int(math.Ceil(float64(totalRecords) / float64(pageSize))),
 		TotalRecords: totalRecords,
 	}
 }

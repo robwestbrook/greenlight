@@ -17,10 +17,10 @@ type Level int8
 // Use iota to assign successive integer values to
 // the constants.
 const (
-	LevelInfo			Level = iota 	// value 0
-	LevelError									// value 1
-	LevelFatal									// value 2
-	LevelOff										// value 3
+	LevelInfo  Level = iota // value 0
+	LevelError              // value 1
+	LevelFatal              // value 2
+	LevelOff                // value 3
 )
 
 // Return a human-friendly string for severity level.
@@ -38,15 +38,15 @@ func (l Level) String() string {
 }
 
 // Logger defines a custom logger type. This type holds:
-//	1.	Output destination
-//	2.	Minimum severity level entries written for
-//	3.	Mutex for coordinating the writes. A mutex is
-//			a mutual exclusion lock. This prevents the
-//			logger from making multiple writes concurrently.
+//  1. Output destination
+//  2. Minimum severity level entries written for
+//  3. Mutex for coordinating the writes. A mutex is
+//     a mutual exclusion lock. This prevents the
+//     logger from making multiple writes concurrently.
 type Logger struct {
-	out 				io.Writer
-	minLevel		Level
-	mu 					sync.Mutex
+	out      io.Writer
+	minLevel Level
+	mu       sync.Mutex
 }
 
 // New returns a new Logger instance that writes log entries
@@ -54,7 +54,7 @@ type Logger struct {
 // output destination.
 func New(out io.Writer, minLevel Level) *Logger {
 	return &Logger{
-		out: out,
+		out:      out,
 		minLevel: minLevel,
 	}
 }
@@ -81,7 +81,7 @@ func (l *Logger) PrintFatal(err error, properties map[string]string) {
 
 // Print writes the log entry.
 func (l *Logger) print(
-	level	Level,
+	level Level,
 	message string,
 	properties map[string]string,
 ) (int, error) {
@@ -93,16 +93,16 @@ func (l *Logger) print(
 
 	// Define an anonymous struct holding data fot
 	// log entry.
-	aux := struct{
-		Level						string						`json:"level"`
-		Time						string						`json:"time"`
-		Message 				string						`json:"message"`
-		Properties 			map[string]string	`json:"properties,omitempty"`
-		Trace						string						`json:"trace,omitempty"`
-	} {
-		Level: level.String(),
-		Time: time.Now().UTC().Format(time.RFC3339),
-		Message: message,
+	aux := struct {
+		Level      string            `json:"level"`
+		Time       string            `json:"time"`
+		Message    string            `json:"message"`
+		Properties map[string]string `json:"properties,omitempty"`
+		Trace      string            `json:"trace,omitempty"`
+	}{
+		Level:      level.String(),
+		Time:       time.Now().UTC().Format(time.RFC3339),
+		Message:    message,
 		Properties: properties,
 	}
 

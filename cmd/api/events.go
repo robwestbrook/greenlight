@@ -40,12 +40,12 @@ func (app *application) createEventHandler(w http.ResponseWriter, r *http.Reques
 
 	// Copy values from input struct to a new Event struct
 	event := &data.Event{
-		Title: input.Title,
+		Title:       input.Title,
 		Description: input.Description,
-		Tags: input.Tags,
-		AllDay: input.AllDay,
-		Start: internal.StringToTime(input.Start),
-		End: internal.StringToTime(input.End),
+		Tags:        input.Tags,
+		AllDay:      input.AllDay,
+		Start:       internal.StringToTime(input.Start),
+		End:         internal.StringToTime(input.End),
 	}
 
 	// Initialize a new Validator
@@ -101,7 +101,7 @@ func (app *application) showEventHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Call the Get() method to fetch data for a specific
-	// event. Use Errors.Is() to check if a 
+	// event. Use Errors.Is() to check if a
 	// data.ErrRecordNotFound is returned. If so, send a
 	// 404 Not Found response to client.
 	event, err := app.models.Events.Get(id)
@@ -150,16 +150,16 @@ func (app *application) updateEventHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Declare an input struct to hold data from client
-	// Pointers have as their zero value: "nil". If an 
+	// Pointers have as their zero value: "nil". If an
 	// input field doesn't have any value, we can check
-	// for zero value. The empty fields will be "nil". 
+	// for zero value. The empty fields will be "nil".
 	var input struct {
-		Title					*string		`json:"title"`
-		Description		*string		`json:"description"`
-		Tags 					[]string	`json:"tags"`
-		AllDay				*bool			`json:"all_day"`
-		Start					*string		`json:"start"`
-		End						*string		`json:"end"`
+		Title       *string  `json:"title"`
+		Description *string  `json:"description"`
+		Tags        []string `json:"tags"`
+		AllDay      *bool    `json:"all_day"`
+		Start       *string  `json:"start"`
+		End         *string  `json:"end"`
 	}
 
 	// Read the JSON request body data into input struct.
@@ -272,9 +272,9 @@ func (app *application) listEventsHandler(w http.ResponseWriter, r *http.Request
 	// Define an input struct to hold expected values
 	// from the request query string.
 	var input struct {
-		Title				string
-		Description	string
-		Tags				[]string
+		Title       string
+		Description string
+		Tags        []string
 		data.Filters
 	}
 
@@ -321,7 +321,7 @@ func (app *application) listEventsHandler(w http.ResponseWriter, r *http.Request
 		"-start",
 		"-end",
 	}
-	
+
 	// Execute the validation checks on the Filters
 	// struct, sending a response containing errors.
 	if data.ValidateFilters(v, input.Filters); !v.Valid() {

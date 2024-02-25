@@ -30,43 +30,43 @@ const version = "1.0.0"
 // Configuration Settings:
 //  1. port - network port for server
 //  2. env - current operating environment
-//	3. db - database config settings
-//		a.	dsn - database name
-//		b.	maxOpenConns - upper limit on open connections
-//		c.	maxIdleConns - upper limit on idle connections
-//		d.	maxIdleTime - set max time connection can be idle before expires
-//	4. limiter - rate limiter config settings
-//		a.	rps - requests per second
-//		b.	burst - burst values
-//		c.	enabled - enable/disable race limiting
-//	5. smtp - email mailer config settings
-//		a.	host - URL address for mailing host
-//		b.	port - Host SMTP port
-//		c.	username - username on host
-//		d.	password - password on host
-//		e.	sender - sender info used on host
-//	6. CORS - CORS config settings
-//		a.	trustedOrigins - slice containing trusted origins
+//  3. db - database config settings
+//     a.	dsn - database name
+//     b.	maxOpenConns - upper limit on open connections
+//     c.	maxIdleConns - upper limit on idle connections
+//     d.	maxIdleTime - set max time connection can be idle before expires
+//  4. limiter - rate limiter config settings
+//     a.	rps - requests per second
+//     b.	burst - burst values
+//     c.	enabled - enable/disable race limiting
+//  5. smtp - email mailer config settings
+//     a.	host - URL address for mailing host
+//     b.	port - Host SMTP port
+//     c.	username - username on host
+//     d.	password - password on host
+//     e.	sender - sender info used on host
+//  6. CORS - CORS config settings
+//     a.	trustedOrigins - slice containing trusted origins
 type config struct {
 	port int
 	env  string
-	db	 struct {
-		dsn 					string
-		maxOpenConns	int
-		maxIdleConns	int
-		maxIdleTime		string
+	db   struct {
+		dsn          string
+		maxOpenConns int
+		maxIdleConns int
+		maxIdleTime  string
 	}
 	limiter struct {
-		rps			float64
-		burst		int
-		enabled	bool
+		rps     float64
+		burst   int
+		enabled bool
 	}
 	smtp struct {
-		host 			string
-		port			int
-		username	string
-		password	string
-		sender		string
+		host     string
+		port     int
+		username string
+		password string
+		sender   string
 	}
 	cors struct {
 		trustedOrigins []string
@@ -77,15 +77,15 @@ type config struct {
 // Dependencies:
 //  1. config - the config struct
 //  2. logger - System logger
-//	3. models - the models struct
-// 	4. mailer - the mailer struct
-//	5. wg - wait group for goroutine monitoring
+//  3. models - the models struct
+//  4. mailer - the mailer struct
+//  5. wg - wait group for goroutine monitoring
 type application struct {
 	config config
 	logger *jsonlog.Logger
 	models data.Models
 	mailer mailer.Mailer
-	wg sync.WaitGroup
+	wg     sync.WaitGroup
 }
 
 // main function - The entry point for the app.
@@ -145,7 +145,7 @@ func main() {
 
 	flag.Parse()
 
-	// Initialize a new jsonlogger that writes any 
+	// Initialize a new jsonlogger that writes any
 	// messages *at or above* the INFO severity level
 	// to the standard out stream.
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
@@ -248,12 +248,12 @@ func openDB(cfg config) (*sql.DB, error) {
 	db.SetConnMaxIdleTime(duration)
 
 	// Create a context with a 5 second timeout deadline.
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// Use PingContext() to establish a new connection to
 	// the database, passing in the context as a parameter.
-	// If connection is not established within the 5 
+	// If connection is not established within the 5
 	// second deadline, return an error.
 	err = db.PingContext(ctx)
 	if err != nil {

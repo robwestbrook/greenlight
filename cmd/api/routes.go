@@ -141,7 +141,6 @@ func (app *application) routes() http.Handler {
 	// //debug/vars	|	expvar.Handler	| provide app debug info
 	router.Handler(http.MethodGet, "/v1/metrics", expvar.Handler())
 
-
 	// Return the router instance wrapped in middleware:
 	//	1.	App Metrics middleware
 	// 	2. 	Recover Panic middleware

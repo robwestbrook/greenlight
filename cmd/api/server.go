@@ -23,10 +23,10 @@ func (app *application) serve() error {
 	//	5.	ReadTimeout
 	//	6.	WriteTimeout
 	srv := &http.Server{
-		Addr:					fmt.Sprintf(":%d", app.config.port),
-		Handler:			app.routes(),
-		IdleTimeout: 	time.Minute,
-		ReadTimeout: 	10 * time.Second,
+		Addr:         fmt.Sprintf(":%d", app.config.port),
+		Handler:      app.routes(),
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
@@ -69,7 +69,7 @@ func (app *application) serve() error {
 		defer cancel()
 
 		// Call Shutdown() on the server, passing in the
-		// context. Shutdown() will return nil if the 
+		// context. Shutdown() will return nil if the
 		// graceful shutdown is successful, or an error.
 		// This is relayed to the shutdownError channel.
 		err := srv.Shutdown(ctx)
@@ -95,9 +95,9 @@ func (app *application) serve() error {
 	}()
 
 	// Log a "starting server" message.
-	app.logger.PrintInfo("starting server", map[string]string {
+	app.logger.PrintInfo("starting server", map[string]string{
 		"addr": srv.Addr,
-		"env": app.config.env,
+		"env":  app.config.env,
 	})
 
 	// Start the server. Calling Shutdown() on the server
@@ -112,7 +112,7 @@ func (app *application) serve() error {
 	// If there is an error returned from Shutdown() on
 	// the shutdownError channel, there is a problem with
 	// the graceful shutdown and the error is returned.
-	err = <- shutdownError
+	err = <-shutdownError
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (app *application) serve() error {
 	app.logger.PrintInfo("stopped server", map[string]string{
 		"addr": srv.Addr,
 	})
-		
+
 	return nil
-	
+
 }

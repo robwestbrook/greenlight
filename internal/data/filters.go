@@ -8,10 +8,10 @@ import (
 
 // Filters type
 type Filters struct {
-	Page					int
-	PageSize			int
-	Sort 					string
-	SortSafelist	[]string
+	Page         int
+	PageSize     int
+	Sort         string
+	SortSafelist []string
 }
 
 // sortColumn function verifies the client-supplied
@@ -60,18 +60,18 @@ func ValidateFilters(v *validator.Validator, f Filters) {
 	//	2.	key: the parameter being validated
 	//	3.	message: the message used when check fails
 	v.Check(
-		f.Page > 0, 
-		"page", 
+		f.Page > 0,
+		"page",
 		"must be greater than zero",
 	)
 	v.Check(
-		f.Page <= 10_000_000, 
-		"page", 
+		f.Page <= 10_000_000,
+		"page",
 		"must be a maximum of 10,000,000",
 	)
 	v.Check(f.PageSize > 0,
-	"page_size",
-	"must be greater than zero",
+		"page_size",
+		"must be greater than zero",
 	)
 	v.Check(
 		f.PageSize <= 100,

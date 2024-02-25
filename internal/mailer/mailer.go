@@ -27,8 +27,8 @@ var templateFS embed.FS
 // sender info for the emails (name and address of who
 // the email is from.)
 type Mailer struct {
-	dialer		*mail.Dialer
-	sender		string
+	dialer *mail.Dialer
+	sender string
 }
 
 // New method initializes a new mail.Dialer.
@@ -73,7 +73,7 @@ func (m Mailer) Send(
 	}
 
 	// Execute the named template "subject", passing in
-	// the dynamic data and storing the result in a 
+	// the dynamic data and storing the result in a
 	// bytes.Buffer variable.
 	subject := new(bytes.Buffer)
 	err = tmpl.ExecuteTemplate(subject, "subject", data)

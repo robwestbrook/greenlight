@@ -10,12 +10,12 @@ import (
 // addresses.
 var (
 	EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zAZ0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-	)
+)
 
 // Validator defines a struct that contains a map
 // of validation errors.
 type Validator struct {
-	Errors				map[string]string
+	Errors map[string]string
 }
 
 // New function is a helper that creates a new

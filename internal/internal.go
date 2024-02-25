@@ -11,7 +11,7 @@ import (
 // date and time to a SQLite-friendly datetime.
 const dbTimeFormat = "2006-01-02 15:04:05"
 
-// StringToTime function takes in a time string 
+// StringToTime function takes in a time string
 // from SQLite. It returns a GO time.Time format.
 // A METHOD on the APPLICATION struct.
 func StringToTime(stringToConvert string) time.Time {
@@ -41,7 +41,7 @@ func CurrentDate() time.Time {
 	return time.Now()
 }
 
-// StringToSlice converts a comma-delimited string 
+// StringToSlice converts a comma-delimited string
 // into a Go slice
 func StringToSlice(str *[]string) *[]string {
 	// Create a variable for the string slice passed in
@@ -69,7 +69,7 @@ func SliceToString(s []string) string {
 	return ""
 }
 
-// GenerateRandomString generate a random string of 
+// GenerateRandomString generate a random string of
 // a supplied length.
 func GenerateRandomString(length int) (string, error) {
 	// Initialize a byte slice of given length.
