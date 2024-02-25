@@ -77,6 +77,14 @@ vendor:
 #
 #======================================================#
 
+# Build Variables:
+#	1.	current_time: Use the unix date command to generate the current time and store it in a current_time variable.
+# 2.	git_description: make app version number from git commit
+#	3.	linker_flags: Use the -s and -X flags
+current_time = $(shell date --iso-8601=seconds)
+git_description = $(shell git describe --always --dirty)
+linker_flags = '-s -X main.buildTime=${current_time} -X main.version=${git_description}'
+
 ## build/api: build the cmd/api application
 # Using the linker flag "-ldflags="-s"" instructs the
 # Go linker to strip the DWARF debugging info and 
@@ -89,5 +97,5 @@ vendor:
 .PHONY: build/api
 build/api:
 	@echo 'Building cmd/api...'
-	go build -ldflags='-s' -o=./bin/api ./cmd/api
-	GOOS=linux GOARCH=amd64 go build -ldflags='-s' -o=./bin/linux_amd64/api ./cmd/api
+	go build -ldflags=${linker_flags} -o=./bin/api ./cmd/api
+	GOOS=linux GOARCH=amd64 go build -ldflags=${linker_flags} -o=./bin/linux_amd64/api ./cmd/api

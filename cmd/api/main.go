@@ -1,3 +1,4 @@
+// main package
 package main
 
 import (
@@ -5,6 +6,7 @@ import (
 	"database/sql"
 	"expvar"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -22,7 +24,13 @@ import (
 )
 
 // Declare a string containing the app version.
-const version = "1.0.0"
+var version string
+
+// Create a buildTime variable to hold the executable
+// binary build time. This must be a string type,
+// because the Go Linker -X flag will only work with
+// string variables.
+var buildTime string
 
 // Define a config struct to hold all configuration
 // settings fot the app. These settings will be
@@ -124,6 +132,7 @@ func main() {
 	// 13.	SMTP password (default: .env password)
 	// 14.	SMTP sender (default: .env sender)
 	// 15.	CORS trusted origins (default: empty []string slice)
+	// 16.	Display application version (default: false)
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
 	flag.StringVar(&cfg.db.dsn, "db-dsn", "greenlight.db", "SQLite database name")
@@ -142,8 +151,17 @@ func main() {
 		cfg.cors.trustedOrigins = strings.Fields(val)
 		return nil
 	})
+	displayVersion := flag.Bool("version", false, "Display version and exit")
 
 	flag.Parse()
+
+	// If the version flag is true, print out the app
+	// version number, build time, and immediately exit.
+	if *displayVersion {
+		fmt.Printf("Version:\t%s\n", version)
+		fmt.Printf("Build time:\t%s\n", buildTime)
+		os.Exit(0)
+	}
 
 	// Initialize a new jsonlogger that writes any
 	// messages *at or above* the INFO severity level
