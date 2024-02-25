@@ -19,3 +19,7 @@ To create a migration:
 To run a migration (use up or down):
 
     migrate -path=./migrations -database=sqlite3://greenlight.db -verbose up
+
+The application uses a combination of Git tags and
+Git commit hashes for versioning. To add a tag using Git:
+    git tag v<version-number>
